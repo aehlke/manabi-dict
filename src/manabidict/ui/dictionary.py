@@ -1,124 +1,94 @@
-# -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'dictionary.ui'
-#
-# Created: Tue Jun  1 19:56:04 2010
-#      by: PyQt4 UI code generator 4.7.3
-#
-# WARNING! All changes made in this file will be lost!
+from PyQt4 import QtGui, QtCore, uic
+from PyQt4.Qt import Qt
+#import Qt
+import sys
+import os
 
-from PyQt4 import QtCore, QtGui
+#from forms.dictionary import Ui_DictionaryWindow
 
-class Ui_DictionaryWindow(object):
-    def setupUi(self, DictionaryWindow):
-        DictionaryWindow.setObjectName("DictionaryWindow")
-        DictionaryWindow.resize(610, 334)
-        DictionaryWindow.setAnimated(True)
-        DictionaryWindow.setDocumentMode(False)
-        DictionaryWindow.setTabShape(QtGui.QTabWidget.Rounded)
-        DictionaryWindow.setDockOptions(QtGui.QMainWindow.AllowTabbedDocks|QtGui.QMainWindow.AnimatedDocks)
-        DictionaryWindow.setUnifiedTitleAndToolBarOnMac(True)
-        self.centralwidget = QtGui.QWidget(DictionaryWindow)
-        self.centralwidget.setObjectName("centralwidget")
-        self.widget = QtGui.QWidget(self.centralwidget)
-        self.widget.setGeometry(QtCore.QRect(0, 0, 610, 270))
-        self.widget.setObjectName("widget")
-        self.verticalLayout = QtGui.QVBoxLayout(self.widget)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.horizontalLayout = QtGui.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.searchMethod = QtGui.QComboBox(self.widget)
-        self.searchMethod.setObjectName("searchMethod")
-        self.searchMethod.addItem("")
-        self.searchMethod.addItem("")
-        self.searchMethod.addItem("")
-        self.searchMethod.addItem("")
-        self.horizontalLayout.addWidget(self.searchMethod)
-        self.searchField = QtGui.QLineEdit(self.widget)
-        self.searchField.setFrame(True)
-        self.searchField.setObjectName("searchField")
-        self.horizontalLayout.addWidget(self.searchField)
-        self.clearSearch = QtGui.QPushButton(self.widget)
-        self.clearSearch.setObjectName("clearSearch")
-        self.horizontalLayout.addWidget(self.clearSearch)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        self.splitter = QtGui.QSplitter(self.widget)
-        self.splitter.setOrientation(QtCore.Qt.Horizontal)
-        self.splitter.setObjectName("splitter")
-        self.searchResults = QtGui.QListWidget(self.splitter)
-        self.searchResults.setAutoFillBackground(False)
-        self.searchResults.setFrameShape(QtGui.QFrame.NoFrame)
-        self.searchResults.setFrameShadow(QtGui.QFrame.Plain)
-        self.searchResults.setProperty("showDropIndicator", False)
-        self.searchResults.setAlternatingRowColors(False)
-        self.searchResults.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.searchResults.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.searchResults.setViewMode(QtGui.QListView.ListMode)
-        self.searchResults.setObjectName("searchResults")
-        QtGui.QListWidgetItem(self.searchResults)
-        QtGui.QListWidgetItem(self.searchResults)
-        self.entryView = QtWebKit.QWebView(self.splitter)
-        self.entryView.setUrl(QtCore.QUrl("about:blank"))
-        self.entryView.setObjectName("entryView")
-        self.verticalLayout.addWidget(self.splitter)
-        DictionaryWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtGui.QMenuBar(DictionaryWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 610, 22))
-        self.menubar.setObjectName("menubar")
-        DictionaryWindow.setMenuBar(self.menubar)
-        self.toolBar = QtGui.QToolBar(DictionaryWindow)
-        self.toolBar.setEnabled(True)
-        self.toolBar.setMovable(False)
-        self.toolBar.setIconSize(QtCore.QSize(22, 22))
-        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
-        self.toolBar.setFloatable(False)
-        self.toolBar.setObjectName("toolBar")
-        DictionaryWindow.addToolBar(QtCore.Qt.ToolBarArea(QtCore.Qt.TopToolBarArea), self.toolBar)
-        self.actionBack = QtGui.QAction(DictionaryWindow)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../../../../incoming/ankiqt/icons/go-previous.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionBack.setIcon(icon)
-        self.actionBack.setObjectName("actionBack")
-        self.actionForward = QtGui.QAction(DictionaryWindow)
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("../../../../incoming/ankiqt/icons/go-next.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionForward.setIcon(icon1)
-        self.actionForward.setObjectName("actionForward")
-        self.actionText_Smaller = QtGui.QAction(DictionaryWindow)
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("../../../misc/textSmaller.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionText_Smaller.setIcon(icon2)
-        self.actionText_Smaller.setObjectName("actionText_Smaller")
-        self.actionText_Bigger = QtGui.QAction(DictionaryWindow)
-        icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("../../../misc/textBigger.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.actionText_Bigger.setIcon(icon3)
-        self.actionText_Bigger.setObjectName("actionText_Bigger")
-        self.toolBar.addAction(self.actionBack)
-        self.toolBar.addAction(self.actionForward)
-        self.toolBar.addAction(self.actionText_Smaller)
-        self.toolBar.addAction(self.actionText_Bigger)
+#from epywing.manager 
 
-        self.retranslateUi(DictionaryWindow)
-        QtCore.QMetaObject.connectSlotsByName(DictionaryWindow)
+class Container(object):
+    def __init__(self):
+        pass
 
-    def retranslateUi(self, DictionaryWindow):
-        DictionaryWindow.setWindowTitle(QtGui.QApplication.translate("DictionaryWindow", "Dictionary", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchMethod.setItemText(0, QtGui.QApplication.translate("DictionaryWindow", "Begins with", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchMethod.setItemText(1, QtGui.QApplication.translate("DictionaryWindow", "Contains", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchMethod.setItemText(2, QtGui.QApplication.translate("DictionaryWindow", "Ends with", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchMethod.setItemText(3, QtGui.QApplication.translate("DictionaryWindow", "Exactly", None, QtGui.QApplication.UnicodeUTF8))
-        self.clearSearch.setText(QtGui.QApplication.translate("DictionaryWindow", "X", None, QtGui.QApplication.UnicodeUTF8))
-        __sortingEnabled = self.searchResults.isSortingEnabled()
-        self.searchResults.setSortingEnabled(False)
-        self.searchResults.item(0).setText(QtGui.QApplication.translate("DictionaryWindow", "test", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchResults.item(1).setText(QtGui.QApplication.translate("DictionaryWindow", "2", None, QtGui.QApplication.UnicodeUTF8))
-        self.searchResults.setSortingEnabled(__sortingEnabled)
-        self.toolBar.setWindowTitle(QtGui.QApplication.translate("DictionaryWindow", "toolBar", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionBack.setText(QtGui.QApplication.translate("DictionaryWindow", "Back", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionBack.setToolTip(QtGui.QApplication.translate("DictionaryWindow", "Back", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionForward.setText(QtGui.QApplication.translate("DictionaryWindow", "Forward", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionText_Smaller.setText(QtGui.QApplication.translate("DictionaryWindow", "Text Smaller", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionText_Bigger.setText(QtGui.QApplication.translate("DictionaryWindow", "Text Bigger", None, QtGui.QApplication.UnicodeUTF8))
+class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
 
-from PyQt4 import QtWebKit
+    ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
+    ui = ui_class()
+
+    def __init__(self, book_manager, parent=None):
+        super(Dictionary, self).__init__(parent)
+
+        self.book_manager = book_manager
+
+        self.setupUi()
+        self.setupMacUi()
+
+        self.ui.searchField.setText('test')
+        self.on_searchField_returnPressed()
+
+    def setupUi(self):
+        #ui = self.ui
+
+        self.ui.setupUi(self)
+
+        #self.connect(ui.searchField, QtCore.SIGNAL("returnPressed()"),
+        #             self.actionGo, QtCore.SLOT("trigger()"))
+    #@self.ui.searchField.returnPressed.connect
+    #def doSearch():
+        #self.book_manager.search_all_combined(self.ui.searchField.)
+
+    def on_searchField_returnPressed(self):
+        query = unicode(self.ui.searchField.text())
+        print query
+            #typedef struct _SContainer {
+            #    id          clazz;
+            #    id          string;
+            #    NSMutableArray* styles;
+            #    NSMutableArray* links;
+            #    int         range;
+            #    bool                gaiji;
+            #    NSMutableData*  raw;
+            #} SContainer;
+            #buffer[sizeof(buffer) - 1] = '\0';
+            #bufferString = [NSMutableString stringWithCapacity:64];
+            #container.string = bufferString;
+            #container.clazz = self;
+            #container.styles = NULL;
+            #container.gaiji = FALSE;
+            #container.raw = NULL;
+                
+        container = Container()
+        container.string = "1"*65#query
+        container.styles = None
+        container.gaiji = False
+        container.raw = None
+        #contaianer.clazz = 
+        results = self.book_manager.search_all(query, search_method='prefix', container=container)
+        self.setResults(results)
+    
+    def setResults(self, results):
+        '''Sets the list of search results, displaying them in the list box.
+        '''
+        #print str(results)
+        #for result in results:
+        self.ui.searchResults.clear()
+        self.ui.searchResults.addItems([result['heading'] for result in results])
+
+    def setupMacUi(self):
+        ui = self.ui
+        ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
+        #ui.searchResults.setAutoFillBackground(True)
+        #ui.searchToolbar.insertWidget(None, ui.searchMethod)
+        #ui.searchToolbar.insertWidget(None, ui.searchField)
+        ui.searchToolbar.insertWidget(None, ui.selectBook)
+        #self.setWindowFlags(self.windowFlags() & ~ Qt.MacWindowToolBarButtonHint) # doesn't work, qt bug
+
+    #def main(self)
+    #    self.show()
+
+
+
+
