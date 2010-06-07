@@ -40,43 +40,6 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
     #def doSearch():
         #self.book_manager.search_all_combined(self.ui.searchField.)
 
-    def on_searchField_returnPressed(self):
-        query = unicode(self.ui.searchField.text())
-        print query
-            #typedef struct _SContainer {
-            #    id          clazz;
-            #    id          string;
-            #    NSMutableArray* styles;
-            #    NSMutableArray* links;
-            #    int         range;
-            #    bool                gaiji;
-            #    NSMutableData*  raw;
-            #} SContainer;
-            #buffer[sizeof(buffer) - 1] = '\0';
-            #bufferString = [NSMutableString stringWithCapacity:64];
-            #container.string = bufferString;
-            #container.clazz = self;
-            #container.styles = NULL;
-            #container.gaiji = FALSE;
-            #container.raw = NULL;
-                
-        container = Container()
-        container.string = "1"*65#query
-        container.styles = None
-        container.gaiji = False
-        container.raw = None
-        #contaianer.clazz = 
-        results = self.book_manager.search_all(query, search_method='prefix', container=container)
-        self.setResults(results)
-    
-    def setResults(self, results):
-        '''Sets the list of search results, displaying them in the list box.
-        '''
-        #print str(results)
-        #for result in results:
-        self.ui.searchResults.clear()
-        self.ui.searchResults.addItems([result['heading'] for result in results])
-
     def setupMacUi(self):
         ui = self.ui
         ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
@@ -85,6 +48,71 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
         #ui.searchToolbar.insertWidget(None, ui.searchField)
         ui.searchToolbar.insertWidget(None, ui.selectBook)
         #self.setWindowFlags(self.windowFlags() & ~ Qt.MacWindowToolBarButtonHint) # doesn't work, qt bug
+
+    def on_searchField_returnPressed(self):
+        query = unicode(self.ui.searchField.text())
+        self.do_search(query)
+        #print query
+        #typedef struct _SContainer {
+        #    id          clazz;
+        #    id          string;
+        #    NSMutableArray* styles;
+        #    NSMutableArray* links;
+        #    int         range;
+        #    bool                gaiji;
+        #    NSMutableData*  raw;
+        #} SContainer;
+        #buffer[sizeof(buffer) - 1] = '\0';
+        #bufferString = [NSMutableString stringWithCapacity:64];
+        #container.string = bufferString;
+        #container.clazz = self;
+        #container.styles = NULL;
+        #container.gaiji = FALSE;
+        #container.raw = NULL;
+                
+        #container = Container()
+        #container.string = "1"*65#query
+        #container.styles = None
+        #container.gaiji = False
+        #container.raw = None
+        #contaianer.clazz = 
+        #for e in results:
+            #print e['heading']
+
+    def on_searchField_textEdited(self, text):
+        self.do_search(unicode(text))
+
+    def on_searchResults_currentItemChanged(self, current, previous):
+        if current:
+            item_data = current.data(Qt.UserRole).toPyObject()
+            self.show_entry(item_data)
+
+    # my methods
+
+    def do_search(self, query):
+        results = self.book_manager.search_all(query, search_method='prefix')#, container=container)
+        self.show_results(results)
+    
+    def show_results(self, results):
+        '''Sets the list of search results, displaying them in the list box.
+        '''
+        #print str(results)
+        #for result in results:
+        sr = self.ui.searchResults
+        sr.clear()
+        #self.ui.searchResults.addItems([result.heading for result in results])
+        for result in results:
+            item = QtGui.QListWidgetItem(result.heading)
+            item.setData(Qt.UserRole, result)
+            sr.addItem(item)
+        sr.scrollToItem(self.ui.searchResults.item(0))
+
+    def show_entry(self, entry):
+        #print entry
+        #print entry.text
+        #print entry.heading
+        self.ui.entryView.setHtml(entry.text)
+        #pass
 
     #def main(self)
     #    self.show()

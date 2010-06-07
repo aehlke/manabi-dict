@@ -8,10 +8,12 @@ from epywing import epwing
 #from bookmanager import BookManager
 from epywing.bookmanager import BookManager
 
+from eb import eb_initialize_library
 from ui.dictionary import Dictionary
 
 
 def main():
+    eb_initialize_library()
     book_manager = BookManager()
     book_manager.add_books(*book_manager.find_books_in_path('../../../epywing/src/epywing/tests'))
     print book_manager.books
