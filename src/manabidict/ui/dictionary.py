@@ -9,9 +9,7 @@ import os
 
 #from epywing.manager 
 
-class Container(object):
-    def __init__(self):
-        pass
+
 
 class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
 
@@ -30,9 +28,9 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
         self.on_searchField_returnPressed()
 
     def setupUi(self):
-        #ui = self.ui
+        ui = self.ui
 
-        self.ui.setupUi(self)
+        ui.setupUi(self)
 
         #self.connect(ui.searchField, QtCore.SIGNAL("returnPressed()"),
         #             self.actionGo, QtCore.SLOT("trigger()"))
@@ -43,41 +41,22 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
     def setupMacUi(self):
         ui = self.ui
         ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
-        #ui.searchResults.setAutoFillBackground(True)
-        #ui.searchToolbar.insertWidget(None, ui.searchMethod)
-        #ui.searchToolbar.insertWidget(None, ui.searchField)
+        ui.searchResults.setStyleSheet('QListWidget { selection-background-color: #DDDDDD; selection-color: black; }')
+        
         ui.searchToolbar.insertWidget(None, ui.selectBook)
         #self.setWindowFlags(self.windowFlags() & ~ Qt.MacWindowToolBarButtonHint) # doesn't work, qt bug
 
     def on_searchField_returnPressed(self):
-        query = unicode(self.ui.searchField.text())
-        self.do_search(query)
-        #print query
-        #typedef struct _SContainer {
-        #    id          clazz;
-        #    id          string;
-        #    NSMutableArray* styles;
-        #    NSMutableArray* links;
-        #    int         range;
-        #    bool                gaiji;
-        #    NSMutableData*  raw;
-        #} SContainer;
-        #buffer[sizeof(buffer) - 1] = '\0';
-        #bufferString = [NSMutableString stringWithCapacity:64];
-        #container.string = bufferString;
-        #container.clazz = self;
-        #container.styles = NULL;
-        #container.gaiji = FALSE;
-        #container.raw = NULL;
-                
-        #container = Container()
-        #container.string = "1"*65#query
-        #container.styles = None
-        #container.gaiji = False
-        #container.raw = None
-        #contaianer.clazz = 
-        #for e in results:
-            #print e['heading']
+        if not self.ui.searchResults.selectedItems():
+            self.ui.searchResults.setCurrentRow(0)
+
+    def on_searchField_keyUpPressed(self):
+        sr = self.ui.searchResults
+        sr.setCurrentRow(sr.currentRow() - 1)
+
+    def on_searchField_keyDownPressed(self):
+        sr = self.ui.searchResults
+        sr.setCurrentRow(sr.currentRow() + 1)
 
     def on_searchField_textEdited(self, text):
         self.do_search(unicode(text))
@@ -86,6 +65,7 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
         if current:
             item_data = current.data(Qt.UserRole).toPyObject()
             self.show_entry(item_data)
+
 
     # my methods
 
@@ -116,7 +96,6 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
 
     #def main(self)
     #    self.show()
-
 
 
 

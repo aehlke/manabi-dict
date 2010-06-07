@@ -81,7 +81,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="searchField">
+       <widget class="MLineEdit" name="searchField">
         <property name="frame">
          <bool>true</bool>
         </property>
@@ -111,6 +111,9 @@
        <property name="frameShadow">
         <enum>QFrame::Plain</enum>
        </property>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
        <property name="showDropIndicator" stdset="0">
         <bool>false</bool>
        </property>
@@ -122,6 +125,15 @@
        </property>
        <property name="selectionBehavior">
         <enum>QAbstractItemView::SelectRows</enum>
+       </property>
+       <property name="textElideMode">
+        <enum>Qt::ElideNone</enum>
+       </property>
+       <property name="verticalScrollMode">
+        <enum>QAbstractItemView::ScrollPerPixel</enum>
+       </property>
+       <property name="horizontalScrollMode">
+        <enum>QAbstractItemView::ScrollPerItem</enum>
        </property>
        <property name="viewMode">
         <enum>QListView::ListMode</enum>
@@ -147,8 +159,6 @@
      </widget>
     </item>
    </layout>
-   <zorder>layoutWidget</zorder>
-   <zorder>gridLayoutWidget</zorder>
    <zorder>splitter</zorder>
    <zorder></zorder>
   </widget>
@@ -257,6 +267,11 @@
    <class>QWebView</class>
    <extends>QWidget</extends>
    <header>QtWebKit/QWebView</header>
+  </customwidget>
+  <customwidget>
+   <class>MLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>ui.mlineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
