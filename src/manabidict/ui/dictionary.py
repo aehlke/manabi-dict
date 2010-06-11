@@ -16,6 +16,8 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
     ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
     ui = ui_class()
 
+    ZOOM_DELTA = 0.05
+
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
 
@@ -29,45 +31,92 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
 
     def setupUi(self):
         ui = self.ui
-
         ui.setupUi(self)
 
-        #self.connect(ui.searchField, QtCore.SIGNAL("returnPressed()"),
-        #             self.actionGo, QtCore.SLOT("trigger()"))
-    #@self.ui.searchField.returnPressed.connect
-    #def doSearch():
-        #self.book_manager.search_all_combined(self.ui.searchField.)
+        ui.searchField.setFocus() #FIXME
+        #ui.entryView.setSmoothScrolling(True)
+
+        ui.entryView.setScrollBar(ui.entryVerticalScrollBar)
+
+
+        # make the results list grayed out when unfocused
+        #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: green; }; QListWidget { selection-background-color: red;};')
+        #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: #DDDDDD; selection-color: black; }')
+
 
     def setupMacUi(self):
         ui = self.ui
         ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
-        ui.searchResults.setStyleSheet('QListWidget { selection-background-color: #DDDDDD; selection-color: black; }')
+        #ui.searchResults.setStyleSheet('QListWidget { selection-background-color: #DDDDDD; selection-color: black; }')
         
-        ui.searchToolbar.insertWidget(None, ui.selectBook)
+        ui.dictionaryToolbar.insertWidget(None, ui.selectBook)
         #self.setWindowFlags(self.windowFlags() & ~ Qt.MacWindowToolBarButtonHint) # doesn't work, qt bug
 
+        ui.splitter.setStretchFactor(0, 0)
+
+
+    # Search field UI
+    
     def on_searchField_returnPressed(self):
-        if not self.ui.searchResults.selectedItems():
-            self.ui.searchResults.setCurrentRow(0)
+        sr, sf = self.ui.searchResults, self.ui.searchField
+
+        if not sr.selectedItems():
+            sr.setCurrentRow(0)
+
+        if sr.currentItem():
+            sf.setText(sr.currentItem().text())
+            self.ui.entryView.setFocus()
+            #sf.selectAll()
 
     def on_searchField_keyUpPressed(self):
         sr = self.ui.searchResults
-        sr.setCurrentRow(sr.currentRow() - 1)
+
+        if sr.currentRow() > 0:
+            sr.setCurrentRow(sr.currentRow() - 1)
 
     def on_searchField_keyDownPressed(self):
         sr = self.ui.searchResults
-        sr.setCurrentRow(sr.currentRow() + 1)
+        if sr.currentRow() < sr.count() - 1:
+            sr.setCurrentRow(sr.currentRow() + 1)
 
     def on_searchField_textEdited(self, text):
         self.do_search(unicode(text))
+
+    def on_clearSearch_clicked(self):
+        sr, sf = self.ui.searchResults, self.ui.searchField
+        sf.clear()
+        sr.clear()
+        sf.setFocus()
+        
+
+    # Search results UI
 
     def on_searchResults_currentItemChanged(self, current, previous):
         if current:
             item_data = current.data(Qt.UserRole).toPyObject()
             self.show_entry(item_data)
 
+    def on_searchResults_lostFocus(self):
+        pass
 
-    # my methods
+    def on_searchResults_gainedFocus(self):
+        pass
+
+
+    # toolbar actions
+
+    def on_actionBack_triggered(self):
+        print 'back'
+
+    def on_actionDecreaseFontSize_triggered(self):
+        ev = self.ui.entryView
+        ev.setZoomFactor(ev.zoomFactor() - self.ZOOM_DELTA)
+
+    def on_actionIncreaseFontSize_triggered(self):
+        ev = self.ui.entryView
+        ev.setZoomFactor(ev.zoomFactor() + self.ZOOM_DELTA)
+
+    # general methods
 
     def do_search(self, query):
         results = self.book_manager.search_all(query, search_method='prefix')#, container=container)
@@ -76,11 +125,8 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
     def show_results(self, results):
         '''Sets the list of search results, displaying them in the list box.
         '''
-        #print str(results)
-        #for result in results:
         sr = self.ui.searchResults
         sr.clear()
-        #self.ui.searchResults.addItems([result.heading for result in results])
         for result in results:
             item = QtGui.QListWidgetItem(result.heading)
             item.setData(Qt.UserRole, result)
@@ -88,14 +134,8 @@ class Dictionary(QtGui.QMainWindow): #, Ui_DictionaryWindow):
         sr.scrollToItem(self.ui.searchResults.item(0))
 
     def show_entry(self, entry):
-        #print entry
-        #print entry.text
-        #print entry.heading
-        self.ui.entryView.setHtml(entry.text)
-        #pass
-
-    #def main(self)
-    #    self.show()
+        html = '<div style="font-family:Baskerville">'+entry.text+'</div>'
+        self.ui.entryView.setHtml(html)
 
 
 
