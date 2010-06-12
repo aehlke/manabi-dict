@@ -38,8 +38,18 @@ class ManabiDictApplication(QApplication):
         self.settings = QSettings()
 
         # get installed dictionaries from stored settings and initialize them
-        book_paths = [unicode(path.toString()) for path in self.settings.value('book_manager/book_paths', []).toList()]
-        self.book_manager.add_books(*book_paths)
+        book_paths = [path.toString() for path in self.settings.value('book_manager/book_paths', []).toList()]
+        paths_to_remove = []
+        for book_path in book_paths:
+            book_path = unicode(book_path)
+            new_books = self.book_manager.add_books(book_path)
+            if not new_books:
+                # it wasn't added successfully, so delete it from the prefs
+                paths_to_remove.append(book_path)
+        if paths_to_remove:
+            book_paths = [_ for _ in book_paths if _ not in paths_to_remove]
+            self.settings.setValue('book_manager/book_paths', book_paths)
+                
 
 
     def setupUi(self):
