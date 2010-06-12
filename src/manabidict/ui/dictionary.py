@@ -72,7 +72,7 @@ class Dictionary(QtGui.QMainWindow):
             sr.setCurrentRow(0)
 
         if sr.currentItem():
-            sf.setText(sr.currentItem().text())
+            #TODO see todo file for notes on this: #sf.setText(sr.currentItem().text())
             self.ui.entryView.setFocus()
             #sf.selectAll()
 
@@ -169,8 +169,8 @@ class Dictionary(QtGui.QMainWindow):
         Call this after updating installed book preferences, and on first launch.
         '''
         sb = self.ui.selectBook
+        current_book_id = unicode(sb.itemData(sb.currentIndex()).toString())# if sb.currentIndex() else None
         sb.clear()
-        current_book_id = sb.itemData(sb.currentIndex())# if sb.currentIndex() else None
         for book_id, book in self.book_manager.books.items():
             if not book.subbooks: continue
             sb.addItem(book.subbooks[0]['name'], book_id)
