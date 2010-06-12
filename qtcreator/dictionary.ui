@@ -351,6 +351,16 @@
      <height>22</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuApplication">
+    <property name="tearOffEnabled">
+     <bool>false</bool>
+    </property>
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionPreferences"/>
+   </widget>
+   <addaction name="menuApplication"/>
   </widget>
   <widget class="QToolBar" name="navToolbar">
    <property name="enabled">
@@ -405,7 +415,7 @@
   <action name="actionBack">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../incoming/ankiqt/icons/go-previous.png</normaloff>../../../../incoming/ankiqt/icons/go-previous.png</iconset>
+     <normaloff>../../../../../incoming/ankiqt/icons/go-previous.png</normaloff>../../../../../incoming/ankiqt/icons/go-previous.png</iconset>
    </property>
    <property name="text">
     <string>Back</string>
@@ -417,7 +427,7 @@
   <action name="actionForward">
    <property name="icon">
     <iconset>
-     <normaloff>../../../../incoming/ankiqt/icons/go-next.png</normaloff>../../../../incoming/ankiqt/icons/go-next.png</iconset>
+     <normaloff>../../../../../incoming/ankiqt/icons/go-next.png</normaloff>../../../../../incoming/ankiqt/icons/go-next.png</iconset>
    </property>
    <property name="text">
     <string>Forward</string>
@@ -426,7 +436,7 @@
   <action name="actionDecreaseFontSize">
    <property name="icon">
     <iconset>
-     <normaloff>../../../misc/textSmaller.png</normaloff>../../../misc/textSmaller.png</iconset>
+     <normaloff>../../../../misc/textSmaller.png</normaloff>../../../../misc/textSmaller.png</iconset>
    </property>
    <property name="text">
     <string>Text Smaller</string>
@@ -435,10 +445,15 @@
   <action name="actionIncreaseFontSize">
    <property name="icon">
     <iconset>
-     <normaloff>../../../misc/textBigger.png</normaloff>../../../misc/textBigger.png</iconset>
+     <normaloff>../../../../misc/textBigger.png</normaloff>../../../../misc/textBigger.png</iconset>
    </property>
    <property name="text">
     <string>Text Bigger</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Options</string>
    </property>
   </action>
  </widget>

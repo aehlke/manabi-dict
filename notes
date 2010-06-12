@@ -1,0 +1,11 @@
+
+Notes
+
+Better mac splitter: http://www.davidpires.com/blog/archives/custom-qsplitter
+
+rich text inside qlistview in C++ using paint
+http://www.replicator.org/node/2
+
+How can I display rich text in a QTable? Simply use QSimpleRichText to draw the text in a reimplemented QTableItem::paint().
+http://qt.nokia.com/developer/faqs/12
+

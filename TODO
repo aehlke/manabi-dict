@@ -3,9 +3,22 @@ TODO:
 
 show the heading inside the text if there is no keyword in (or at the top of) the text
 
+renamable labels for books
 
 combine ~suffix entries back into main entry somehow (probably per dictionary, after detecting which dict it is)
+
+drag-n-drop for folders into the Preferences table to install a dictionary
+?drag-n-drop reordering of dicts
+
+
+better subbook handling?
+when setting the search field to the result selected (like when they press enter), it should not include any special notation characters like the superscript 1 etc
+
 
 
 IDEAS:
 allow multi select on the results list, to show multiple entries?
+
+
+BUGS:
+the sample test ej,je dict shows twice as many entries as it should (misdetermining entry endpoint)
