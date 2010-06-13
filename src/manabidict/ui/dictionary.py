@@ -30,11 +30,15 @@ class Dictionary(QMainWindow):
         super(Dictionary, self).__init__(parent)
 
         self.book_manager = book_manager
+        self.settings = QSettings()
 
         self._results_last_shown_at = 0
 
+        self._finishedUiSetup = False
         self.setupUi()
         self.setupMacUi()
+        self.restoreUiState()
+        self._finishedUiSetup = True
 
         #self.ui.searchField.setText('test')
         #self.on_searchField_returnPressed()
@@ -67,6 +71,14 @@ class Dictionary(QMainWindow):
         # make the results list grayed out when unfocused
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: green; }; QListWidget { selection-background-color: red;};')
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: #DDDDDD; selection-color: black; }')
+
+    def restoreUiState(self):
+        '''Restores UI state from the last time it was opened.
+        '''
+        book_id = unicode(self.settings.value('ui_state/selected_book_id').toString())
+        index = self.ui.selectBook.findData(book_id)
+        if index != -1:
+            self.ui.selectBook.setCurrentIndex(index)
 
 
     # Search field UI
@@ -122,6 +134,9 @@ class Dictionary(QMainWindow):
     @pyqtSignature('int')
     def on_selectBook_currentIndexChanged(self, index):
         self.do_search()
+        book_id = self.selected_book().id
+        if self._finishedUiSetup:
+            self.settings.setValue('ui_state/selected_book_id', book_id)
 
     @pyqtSignature('int')
     def on_searchMethod_currentIndexChanged(self, index):
@@ -215,7 +230,7 @@ class Dictionary(QMainWindow):
             sm.addItem(name, id)
  
 
-    def do_search(self, query=None, search_method=None, max_results_per_book=250):
+    def do_search(self, query=None, search_method=None, max_results_per_book=30):
         book = self.selected_book()
         if not book: return
         if not query:

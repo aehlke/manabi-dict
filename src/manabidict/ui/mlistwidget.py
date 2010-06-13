@@ -67,9 +67,6 @@ class MListWidget(QListWidget):
     def addHtmlItem(self, html, data):
         '''Adds a new QTextEdit widget containing the given HTMl as an item in the list.
         '''
-        item = QListWidgetItem()
-        item.setData(Qt.UserRole, data)
-        self.addItem(item)
 
         html = u'<html><body style="margin:0px 0px 0px 4px">{0}</body></html>'.format(html)
         self._htmlItemWidgetFinishedLoading = False
@@ -85,6 +82,9 @@ class MListWidget(QListWidget):
         
         self._htmlItemWidget.render(pm, flags=QWidget.DrawChildren)
 
+        item = QListWidgetItem()
+        item.setData(Qt.UserRole, data)
+        self.addItem(item)
         item.setSizeHint(self._htmlItemWidget.frameSize())
 
         label = QLabel()
