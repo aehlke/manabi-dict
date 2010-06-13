@@ -20,7 +20,8 @@ class Dictionary(QtGui.QMainWindow):
     ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
     ui = ui_class()
 
-    ZOOM_DELTA = 0.05
+    #ZOOM_DELTA = 0.05
+    ZOOM_DELTA = 0.15
 
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
@@ -209,7 +210,7 @@ class Dictionary(QtGui.QMainWindow):
             sm.addItem(name, id)
  
 
-    def do_search(self, query=None, search_method=None, max_results_per_book=50):
+    def do_search(self, query=None, search_method=None, max_results_per_book=25):
         book = self.selected_book()
         if not book: return
         if not query:

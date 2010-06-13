@@ -168,7 +168,7 @@
           <enum>Qt::Horizontal</enum>
          </property>
          <property name="opaqueResize">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="handleWidth">
           <number>2</number>

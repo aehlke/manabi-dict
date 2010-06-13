@@ -1,8 +1,12 @@
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4.Qt import Qt
+from PyQt4.QtWebKit import QWebView, QWebSettings
 
 class MListWidget(QListWidget):
+    '''Allows setting HTML items instead of just text.
+    This is a nasty hack, unfortunately - thanks to some unfortunate Qt API decicions (QLabel inconsistently hides certain internals :( )
+    '''
     gainedFocus = pyqtSignal()
     lostFocus = pyqtSignal()
 
@@ -11,6 +15,7 @@ class MListWidget(QListWidget):
 
         self._htmlItemLabel = None
         self._htmlItemWidget = None
+        self._htmlItemWidgetFinishedLoading = False
 
         self._prepHtmlItemWidget()
 
@@ -22,49 +27,64 @@ class MListWidget(QListWidget):
         self.lostFocus.emit()
         event.accept()
 
+    def _htmlItemWidgetLoadedSignal(self, ok):
+        self._htmlItemWidgetFinishedLoading = True
+
     def _prepHtmlItemWidget(self):
-        self._htmlItemWidget = QTextEdit()
+        self._htmlItemWidget = QWebView()
         hw = self._htmlItemWidget
-        hw.setText(u'')
 
-        hw.setFont(self.font())
-        hw.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        hw.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        hw.loadFinished.connect(self._htmlItemWidgetLoadedSignal)
 
-        f = QTextFrameFormat()
-        f.setMargin(0)
-        f.setPadding(0)
-        f.setBorder(0)
-        hw.document().rootFrame().setFrameFormat(f)
-        hw.viewport().setAutoFillBackground(False)
 
-        #label.setText('<b>hello</b>')
-        #label.setText('yeah<img src=":/gaiji/confused.png"><img src=":/gaiji/confused.png"><img src=":/gaiji/confused.png">'+html) #setHtml to force html
-        hw.setReadOnly(True)
-        hw.setFrameShape(QFrame.NoFrame)
-        hw.setTextInteractionFlags(Qt.NoTextInteraction)
+        #TODO hw.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        #hw.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        font_metrics = QFontMetrics(hw.currentFont())
-        h = font_metrics.height() + hw.frameWidth() * 2 + 1
-        #hw.setFixedHeight(h)
-        hw.setFixedHeight(18)
-        hw.setFixedWidth(self.size().width() - 4)
+        # font
+        ws = hw.settings()
+        font_size = self.font().pointSize()
+        ws.setFontSize(QWebSettings.DefaultFontSize, font_size)
+        ws.setFontFamily(QWebSettings.StandardFont, self.font().family())
+
+        # transparency
+        palette = hw.palette()
+        palette.setBrush(QPalette.Base, Qt.transparent)
+        hw.page().setPalette(palette)
+        hw.setAttribute(Qt.WA_OpaquePaintEvent, False)
+
+        # better rendering
+        hw.setRenderHint(QPainter.Antialiasing, True)
+        hw.setRenderHint(QPainter.TextAntialiasing, True)
+        hw.setRenderHint(QPainter.SmoothPixmapTransform, True)
+        hw.setRenderHint(QPainter.HighQualityAntialiasing, True)
+
+        hw.setHtml(u'')
+        h = font_size + 4
+        hw.setFixedHeight(h)
+        
 
 
 
     def addHtmlItem(self, html, data):
         '''Adds a new QTextEdit widget containing the given HTMl as an item in the list.
         '''
-        item = QListWidgetItem(u'')
+        item = QListWidgetItem()
         item.setData(Qt.UserRole, data)
         self.addItem(item)
 
+        html = u'<html><body style="margin:0px 0px 0px 4px">{0}</body></html>'.format(html)
+        self._htmlItemWidgetFinishedLoading = False
         self._htmlItemWidget.setHtml(html)
 
         pm = QImage(self._htmlItemWidget.size(), QImage.Format_ARGB32)
-        #pm = QPixmap(self._htmlItemWidget.size())
         pm.fill(Qt.transparent)
-        self._htmlItemWidget.viewport().render(pm, flags=QWidget.DrawChildren)
+
+        # wait for it to finish loading, then render
+        q_app = QApplication.instance()
+        while not self._htmlItemWidgetFinishedLoading:
+            q_app.processEvents(QEventLoop.WaitForMoreEvents | QEventLoop.ExcludeUserInputEvents)
+        
+        self._htmlItemWidget.render(pm, flags=QWidget.DrawChildren)
 
         item.setSizeHint(self._htmlItemWidget.frameSize())
 
@@ -74,10 +94,4 @@ class MListWidget(QListWidget):
         label.setPixmap(QPixmap.fromImage(pm))
         
         self.setItemWidget(item, label)
-
-        #self.setItemWidget(item, label)
-        #self.
-        #item = QtGui.QListWidgetItem(result.heading)
-        #item.setData(Qt.UserRole, result)
-        #sr.addItem(item)
 
