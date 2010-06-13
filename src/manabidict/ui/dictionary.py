@@ -225,10 +225,12 @@ class Dictionary(QtGui.QMainWindow):
         '''
         sr = self.ui.searchResults
         sr.clear()
+        #sr._prepHtmlItemWidget() #FIXME
         for result in results:
-            item = QtGui.QListWidgetItem(result.heading)
-            item.setData(Qt.UserRole, result)
-            sr.addItem(item)
+            sr.addHtmlItem(result.heading, result)
+            #item = QtGui.QListWidgetItem(result.heading)
+            #item.setData(Qt.UserRole, result)
+            #sr.addItem(item)
         sr.scrollToItem(self.ui.searchResults.item(0))
 
     def show_entry(self, entry):
