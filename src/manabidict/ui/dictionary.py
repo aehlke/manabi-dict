@@ -1,10 +1,13 @@
 
-from PyQt4 import QtGui, QtCore, uic
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4 import uic
 from PyQt4.Qt import Qt
 #import Qt
 import sys
 import os
 from itertools import islice
+import time
 
 from preferences import Preferences
 from mspacer import MSpacer
@@ -15,7 +18,7 @@ from mspacer import MSpacer
 
 
 
-class Dictionary(QtGui.QMainWindow):
+class Dictionary(QMainWindow):
 
     ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
     ui = ui_class()
@@ -27,6 +30,8 @@ class Dictionary(QtGui.QMainWindow):
         super(Dictionary, self).__init__(parent)
 
         self.book_manager = book_manager
+
+        self._results_last_shown_at = 0
 
         self.setupUi()
         self.setupMacUi()
@@ -114,11 +119,11 @@ class Dictionary(QtGui.QMainWindow):
 
     # Other UI
 
-    @QtCore.pyqtSignature('int')
+    @pyqtSignature('int')
     def on_selectBook_currentIndexChanged(self, index):
         self.do_search()
 
-    @QtCore.pyqtSignature('int')
+    @pyqtSignature('int')
     def on_searchMethod_currentIndexChanged(self, index):
         self.do_search()
 
@@ -139,7 +144,7 @@ class Dictionary(QtGui.QMainWindow):
 
     # menu actions
 
-    @QtCore.pyqtSignature('')
+    @pyqtSignature('')
     def on_actionPreferences_triggered(self):
         '''Display preferences dialog.
         '''
@@ -210,7 +215,7 @@ class Dictionary(QtGui.QMainWindow):
             sm.addItem(name, id)
  
 
-    def do_search(self, query=None, search_method=None, max_results_per_book=25):
+    def do_search(self, query=None, search_method=None, max_results_per_book=250):
         book = self.selected_book()
         if not book: return
         if not query:
@@ -224,11 +229,20 @@ class Dictionary(QtGui.QMainWindow):
     def show_results(self, results):
         '''Sets the list of search results, displaying them in the list box.
         '''
+        ran_at = time.time()
+        self._results_last_shown_at = ran_at
+        #self._show_results_queue.append(queue_time)
         sr = self.ui.searchResults
         sr.clear()
-        #sr._prepHtmlItemWidget() #FIXME
+        q_app = QApplication.instance()
+        i = 0
         for result in results:
+            if ran_at < self._results_last_shown_at:
+                return
             sr.addHtmlItem(result.heading, result)
+            if not i % 4:
+                q_app.processEvents()
+            i += 1
             #item = QtGui.QListWidgetItem(result.heading)
             #item.setData(Qt.UserRole, result)
             #sr.addItem(item)

@@ -36,7 +36,6 @@ class MListWidget(QListWidget):
 
         hw.loadFinished.connect(self._htmlItemWidgetLoadedSignal)
 
-
         #TODO hw.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         #hw.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
