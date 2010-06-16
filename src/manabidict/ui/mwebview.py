@@ -17,10 +17,11 @@ class MWebView(QtWebKit.QWebView):
 
         #self._smooth_scroller = MSmoothScroller()
 
-    def setScrollBar(self, scroll_bar):
+    def setScrollBar(self, scroll_bar, scroll_bar_container=None):
         '''Sets a scrollbar which will update and be updated by this webview.
         '''
         sb = self._sb = scroll_bar
+        self._sb_container = scroll_bar_container
 
         #frame = ui.entryView.page().mainFrame()
         frame = self.page().mainFrame()
@@ -33,7 +34,10 @@ class MWebView(QtWebKit.QWebView):
         self._updateScrollBarMax()
 
         self.page().scrollRequested.connect(self._scrollRequested)
-        self.page().geometryChangeRequested.connect(lambda geom: self._updateScrollBarMax)
+        self.page().geometryChangeRequested.connect(lambda geom: self._updateScrollBarMax())
+        self.loadStarted.connect(lambda: self._refreshScrollBar())
+        #self.loadFinished.connect(lambda ok: self._refreshScrollBar())
+        self.page().mainFrame().contentsSizeChanged.connect(lambda size: self._refreshScrollBar())
         #self.onResize.connect(self._geometryChangeRequested)
         self._ignore_value_changed = False
         #sb.valueChanged.connect(self._scrollValueChanged)
@@ -47,6 +51,11 @@ class MWebView(QtWebKit.QWebView):
     def resizeEvent(self, e):
         super(MWebView, self).resizeEvent(e)
         self._updateScrollBarMax()
+
+    def _refreshScrollBar(self):
+        self._updateScrollBarMax()
+        y = self.page().mainFrame().scrollPosition().y()
+        self._scrollToY(y)
 
     def _scrollActionTriggered(self, action):
         if action is not QtGui.QAbstractSlider.SliderMove:
@@ -69,11 +78,30 @@ class MWebView(QtWebKit.QWebView):
         self._updateScrollBarMax()
         self._sb.setValue(self._sb.value() - dy)
 
+    def _hideScrollBar(self):
+        if self._sb_container:
+            self._sb_container.hide()
+        else:
+            self._sb.hide()
+        #self.adjustSize()
+        #self.parent().adjustSize()
+        #self._sb_container.adjustSize()
+
+    def _showScrollBar(self):
+        if self._sb_container:
+            self._sb_container.show()
+        else:
+            self._sb.show()
+
     def _updateScrollBarMax(self):
         viewport_height = self.page().viewportSize().height()
         max_value = self.page().mainFrame().contentsSize().height() - viewport_height
-        self._sb.setMaximum(max_value)
-        self._sb.setPageStep(viewport_height)
+        if max_value <= 0:
+            self._hideScrollBar()
+        else:
+            self._showScrollBar()
+            self._sb.setMaximum(max_value)
+            self._sb.setPageStep(viewport_height)
 
         #page.
 

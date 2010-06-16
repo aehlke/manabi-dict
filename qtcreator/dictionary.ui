@@ -161,6 +161,12 @@
        </property>
        <item>
         <widget class="MSplitter" name="splitter">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="autoFillBackground">
           <bool>false</bool>
          </property>
@@ -199,7 +205,7 @@
            <bool>false</bool>
           </property>
           <property name="alternatingRowColors">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <property name="selectionMode">
            <enum>QAbstractItemView::SingleSelection</enum>
@@ -221,6 +227,12 @@
           </property>
          </widget>
          <widget class="MWebView" name="entryView">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="focusPolicy">
            <enum>Qt::StrongFocus</enum>
           </property>
@@ -236,7 +248,16 @@
         </widget>
        </item>
        <item>
-        <widget class="QWidget" name="widget_2" native="true">
+        <widget class="QWidget" name="entryVerticalScrollBarContainer" native="true">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <property name="spacing">
            <number>0</number>
@@ -254,7 +275,7 @@
           <item>
            <widget class="MCornerSpacer" name="scrollBarCorner" native="true">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>

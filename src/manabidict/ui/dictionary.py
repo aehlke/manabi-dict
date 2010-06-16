@@ -3,6 +3,7 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4 import uic
 from PyQt4.Qt import Qt
+from PyQt4.QtWebKit import QWebPage
 #import Qt
 import sys
 import os
@@ -15,6 +16,7 @@ from mspacer import MSpacer
 #from forms.dictionary import Ui_DictionaryWindow
 
 #from epywing.manager 
+from epywing.uris import route as route_dictionary_uri
 
 
 
@@ -24,7 +26,8 @@ class Dictionary(QMainWindow):
     ui = ui_class()
 
     #ZOOM_DELTA = 0.05
-    ZOOM_DELTA = 0.15
+    ZOOM_DELTA = 0.10
+    ZOOM_RANGE = (0.4, 4.0,)
 
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
@@ -48,12 +51,19 @@ class Dictionary(QMainWindow):
         ui = self.ui
         ui.setupUi(self)
 
+        ui.searchResults.setFocusPolicy(Qt.StrongFocus)
+
+        # Entry view
+        ui.entryView.setScrollBar(ui.entryVerticalScrollBar, scroll_bar_container=ui.entryVerticalScrollBarContainer)
+        # all links should fire the linkClicked signal
+        ui.entryView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+
         ui.searchField.setFocus() #FIXME
         #ui.entryView.setSmoothScrolling(True)
 
-        ui.entryView.setScrollBar(ui.entryVerticalScrollBar)
         self.reload_books_list()
         self.reload_search_methods_list()
+
 
 
     def setupMacUi(self):
@@ -129,6 +139,13 @@ class Dictionary(QMainWindow):
         pass
 
 
+    # Entry view UI
+    def on_entryView_linkClicked(self, url):
+        url = unicode(url.toString())
+        resource = route_dictionary_uri(url, self.book_manager.books.values())
+        self.show_entry(resource)
+
+
     # Other UI
 
     @pyqtSignature('int')
@@ -145,16 +162,17 @@ class Dictionary(QMainWindow):
 
     # toolbar actions
 
+    @pyqtSignature('')
     def on_actionBack_triggered(self):
         print 'back'
 
+    @pyqtSignature('')
     def on_actionDecreaseFontSize_triggered(self):
-        ev = self.ui.entryView
-        ev.setZoomFactor(ev.zoomFactor() - self.ZOOM_DELTA)
+        self.zoom_entry_view(-self.ZOOM_DELTA)
 
+    @pyqtSignature('')
     def on_actionIncreaseFontSize_triggered(self):
-        ev = self.ui.entryView
-        ev.setZoomFactor(ev.zoomFactor() + self.ZOOM_DELTA)
+        self.zoom_entry_view(self.ZOOM_DELTA)
 
 
     # menu actions
@@ -171,6 +189,13 @@ class Dictionary(QMainWindow):
 
 
     # general methods
+
+    def zoom_entry_view(self, zoom_delta):
+        ev = self.ui.entryView
+        new_zoom = ev.zoomFactor() + (ev.zoomFactor() * zoom_delta)
+        if new_zoom >= self.ZOOM_RANGE[0] and new_zoom <= self.ZOOM_RANGE[1]:
+            ev.setZoomFactor(ev.zoomFactor() + zoom_delta)
+
 
     def selected_search_method(self):
         '''Returns the string ID of the currently selected search method.
@@ -250,6 +275,7 @@ class Dictionary(QMainWindow):
         sr = self.ui.searchResults
         sr.clear()
         q_app = QApplication.instance()
+        q_app.processEvents()
         i = 0
         for result in results:
             if ran_at < self._results_last_shown_at:

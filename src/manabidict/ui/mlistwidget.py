@@ -58,10 +58,9 @@ class MListWidget(QListWidget):
         hw.setRenderHint(QPainter.HighQualityAntialiasing, True)
 
         hw.setHtml(u'')
-        h = font_size + 4
+        h = font_size + 6
         hw.setFixedHeight(h)
         
-
 
 
     def addHtmlItem(self, html, data):

@@ -14,7 +14,12 @@ drag-n-drop for folders into the Preferences table to install a dictionary
 better subbook handling?
 when setting the search field to the result selected (like when they press enter), it should not include any special notation characters like the superscript 1 etc
 
+shorter IDs for books. possibly store these in a dotfile in the epwing dir so it's not path-dependent
 
+
+on-hover of links, show the entry's title or something
+
+custom horizontal scrollbar for webview so that it doesn't overlap the corner
 
 IDEAS:
 allow multi select on the results list, to show multiple entries?
@@ -23,6 +28,8 @@ allow multi select on the results list, to show multiple entries?
 BUGS:
 the sample test ej,je dict shows twice as many entries as it should (misdetermining entry endpoint)
 resize book select on switch
+mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
 
 epywing bugs:
 need to change < and > to entities if theyre part of the text
+'dame' in hiragana is broke in supa readers (see: kotonoko)
