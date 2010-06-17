@@ -65,7 +65,6 @@ class Dictionary(QMainWindow):
         self.reload_search_methods_list()
 
 
-
     def setupMacUi(self):
         ui = self.ui
         ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
@@ -142,8 +141,13 @@ class Dictionary(QMainWindow):
     # Entry view UI
     def on_entryView_linkClicked(self, url):
         url = unicode(url.toString())
-        resource = route_dictionary_uri(url, self.book_manager.books.values())
-        self.show_entry(resource)
+        if '#' in url:
+            # it contains a hash, which will scroll the view to the given named anchor
+            hash_string = url.split('#')[-1]
+            self.ui.entryView.scrollToAnchor(hash_string)
+        else:
+            resource = route_dictionary_uri(url, self.book_manager.books.values())
+            self.show_entry(resource)
 
 
     # Other UI

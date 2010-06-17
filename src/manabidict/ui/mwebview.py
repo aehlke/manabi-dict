@@ -17,6 +17,10 @@ class MWebView(QtWebKit.QWebView):
 
         #self._smooth_scroller = MSmoothScroller()
 
+    def scrollToAnchor(self, anchor_name):
+        anchor = self.page().mainFrame().findFirstElement("[name='{0}']".format(anchor_name))
+        anchor.evaluateJavaScript('this.scrollIntoView();')
+
     def setScrollBar(self, scroll_bar, scroll_bar_container=None):
         '''Sets a scrollbar which will update and be updated by this webview.
         '''
