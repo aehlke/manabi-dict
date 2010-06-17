@@ -1,13 +1,15 @@
 
-from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 from PyQt4.Qt import Qt
 
-class MLineEdit(QtGui.QLineEdit):
+class MLineEdit(QLineEdit):
     def __init__(self, parent = None):
-        QtGui.QLineEdit.__init__(self, parent)
+        QLineEdit.__init__(self, parent)
 
-    keyUpPressed = QtCore.pyqtSignal()
-    keyDownPressed = QtCore.pyqtSignal()
+    keyUpPressed = pyqtSignal()
+    keyDownPressed = pyqtSignal()
+    keyEscapePressed = pyqtSignal()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Up:
@@ -16,5 +18,8 @@ class MLineEdit(QtGui.QLineEdit):
         elif event.key() == Qt.Key_Down:
             self.keyDownPressed.emit()
             event.accept()
+        elif event.key() == Qt.Key_Escape:
+            self.keyEscapePressed.emit()
+            event.accept()
         else:
-            QtGui.QLineEdit.keyPressEvent(self, event)
+            QLineEdit.keyPressEvent(self, event)

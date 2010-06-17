@@ -26,7 +26,6 @@ class Dictionary(QMainWindow):
     ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
     ui = ui_class()
 
-    #ZOOM_DELTA = 0.05
     ZOOM_DELTA = 0.10
     ZOOM_RANGE = (0.4, 4.0,)
 
@@ -59,7 +58,7 @@ class Dictionary(QMainWindow):
         # all links should fire the linkClicked signal
         ui.entryView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
 
-        ui.searchField.setFocus() #FIXME
+        ui.searchField.search_field.setFocus() #FIXME
         #ui.entryView.setSmoothScrolling(True)
 
         self.reload_books_list()
@@ -90,8 +89,17 @@ class Dictionary(QMainWindow):
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: green; }; QListWidget { selection-background-color: red;};')
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: #DDDDDD; selection-color: black; }')
 
+        # search bar
+        ui.searchField.setResourceImageUrlBase(':/images/searchbar')
+        isf = ui.searchField.search_field
+        isf.returnPressed.connect(self.on_searchField_returnPressed)
+        isf.keyUpPressed.connect(self.on_searchField_keyUpPressed)
+        isf.keyDownPressed.connect(self.on_searchField_keyDownPressed)
+        isf.textEdited.connect(self.on_searchField_textEdited)
+        ui.searchField.clear_button.clicked.connect(self.on_clearSearch_clicked)
 
         # toolbar icons
+        
         # hide the existing non-mac ones
         for action in [ui.actionBack, ui.actionForward, ui.actionDecreaseFontSize, ui.actionIncreaseFontSize]:
             action.setVisible(False)
@@ -151,9 +159,8 @@ class Dictionary(QMainWindow):
 
     def on_clearSearch_clicked(self):
         sr, sf = self.ui.searchResults, self.ui.searchField
-        sf.clear()
         sr.clear()
-        sf.setFocus()
+        sf.search_field.setFocus()
         
 
     # Search results UI
@@ -295,7 +302,7 @@ class Dictionary(QMainWindow):
         book = self.selected_book()
         if not book: return
         if not query:
-            query = unicode(self.ui.searchField.text())
+            query = unicode(self.ui.searchField.search_field.text())
         if not search_method:
             search_method = self.selected_search_method()
         results = list(islice(book.search(query, search_method=search_method), 0, max_results_per_book))

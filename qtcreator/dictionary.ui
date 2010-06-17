@@ -129,7 +129,7 @@
         </layout>
        </item>
        <item>
-        <widget class="MLineEdit" name="searchField">
+        <widget class="MMacSearchBar" name="searchField" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -138,28 +138,9 @@
          </property>
          <property name="minimumSize">
           <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="frame">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QToolButton" name="clearSearch">
-         <property name="maximumSize">
-          <size>
-           <width>22</width>
+           <width>70</width>
            <height>22</height>
           </size>
-         </property>
-         <property name="text">
-          <string>X</string>
-         </property>
-         <property name="popupMode">
-          <enum>QToolButton::DelayedPopup</enum>
          </property>
         </widget>
        </item>
@@ -518,11 +499,6 @@
    <header>ui.mwebview.h</header>
   </customwidget>
   <customwidget>
-   <class>MLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>ui.mlineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>MListWidget</class>
    <extends>QListWidget</extends>
    <header>ui.mlistwidget.h</header>
@@ -548,6 +524,12 @@
    <class>MSplitter</class>
    <extends>QSplitter</extends>
    <header>ui.msplitter.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MMacSearchBar</class>
+   <extends>QWidget</extends>
+   <header>ui.mmacsearchbar.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

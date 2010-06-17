@@ -7,7 +7,7 @@ refactor style sheet resources, and look at the dictionary.app ones
 better subbook handling?
 when setting the search field to the result selected (like when they press enter), it should not include any special notation characters like the superscript 1 etc
 
-
+inactive-styled segmented buttons
 
 
 custom horizontal scrollbar for webview so that it doesn't overlap the corner
@@ -30,6 +30,10 @@ combine ~suffix entries back into main entry somehow (probably per dictionary, a
 
 IDEAS:
 allow multi select on the results list, to show multiple entries?
+
+sort results by heading word length
+
+show word commonality
 
 
 BUGS:

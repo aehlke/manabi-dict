@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="images">
+    <file>searchbar/history-button-disabled.png</file>
+    <file>searchbar/clear-button-pressed.png</file>
+    <file>searchbar/background.png</file>
+    <file>searchbar/clear-button.png</file>
+    <file>searchbar/clear-button-disabled.png</file>
+    <file>searchbar/history-button.png</file>
     <file>icons/toolbar/button-left.png</file>
     <file>icons/toolbar/button-left-disabled.png</file>
     <file>icons/toolbar/button-left-pressed.png</file>
