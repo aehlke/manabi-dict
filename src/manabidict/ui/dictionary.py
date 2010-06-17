@@ -12,6 +12,7 @@ import time
 
 from preferences import Preferences
 from mspacer import MSpacer
+from msegmentedbutton import MSegmentedButton
 
 #from forms.dictionary import Ui_DictionaryWindow
 
@@ -73,13 +74,44 @@ class Dictionary(QMainWindow):
         #spacer = QtGui.QSpacer(10, 0, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         spacer = MSpacer()
         #spacer.setOrientation(Qt.Horizontal)
+        ui.selectBook.setContentsMargins(0, 0, 0, 0) #l, t, r, b
+        ui.selectBook.setMinimumHeight(26)
+        #ui.selectBookContainer = QWidget()
+        #ui.selectBookContainer.setLayout(QHBoxLayout())
+        #ui.selectBookContainer.layout().setContentsMargins(0, 0, 0, 0)
+        #ui.selectBookContainer.layout().setSpacing(0)
+        #ui.selectBookContainer.layout().addWidget(ui.selectBook)
         ui.dictionaryToolbar.insertWidget(None, spacer)
         ui.dictionaryToolbar.insertWidget(None, ui.selectBook)
+        #ui.dictionaryToolbar.insertWidget(None, ui.selectBookContainer)
         #self.setWindowFlags(self.windowFlags() & ~ Qt.MacWindowToolBarButtonHint) # doesn't work, qt bug
 
         # make the results list grayed out when unfocused
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: green; }; QListWidget { selection-background-color: red;};')
         #ui.searchResults.setStyleSheet('QListWidget:focus { selection-background-color: #DDDDDD; selection-color: black; }')
+
+
+        # toolbar icons
+        # hide the existing non-mac ones
+        for action in [ui.actionBack, ui.actionForward, ui.actionDecreaseFontSize, ui.actionIncreaseFontSize]:
+            action.setVisible(False)
+
+        self.ui.history_buttons = MSegmentedButton(parent=self)
+        url_base = ':/images/icons/toolbar/button-'
+        ui.history_buttons.left_button.setImageUrls(url_base + 'left.png', url_base + 'left-pressed.png', url_base + 'left-disabled.png')
+        ui.history_buttons.right_button.setImageUrls(url_base + 'right.png', url_base + 'right-pressed.png', url_base + 'right-disabled.png')
+        ui.history_buttons.left_button.clicked.connect(lambda: ui.actionBack.trigger())
+        ui.history_buttons.right_button.clicked.connect(lambda: ui.actionForward.trigger())
+        ui.navToolbar.addWidget(ui.history_buttons)
+
+        ui.text_size_buttons = MSegmentedButton(parent=self)
+        url_base = ':/images/icons/toolbar/text-'
+        ui.text_size_buttons.left_button.setImageUrls(url_base + 'smaller.png', url_base + 'smaller-pressed.png', url_base + 'smaller-disabled.png')
+        ui.text_size_buttons.right_button.setImageUrls(url_base + 'bigger.png', url_base + 'bigger-pressed.png', url_base + 'bigger-disabled.png')
+        ui.text_size_buttons.left_button.clicked.connect(lambda: ui.actionDecreaseFontSize.trigger())
+        ui.text_size_buttons.right_button.clicked.connect(lambda: ui.actionIncreaseFontSize.trigger())
+        ui.navToolbar.addWidget(ui.text_size_buttons)
+
 
     def restoreUiState(self):
         '''Restores UI state from the last time it was opened.
@@ -284,17 +316,24 @@ class Dictionary(QMainWindow):
         for result in results:
             if ran_at < self._results_last_shown_at:
                 return
-            sr.addHtmlItem(result.heading, result)
-            if not i % 4:
-                q_app.processEvents()
-            i += 1
+            # add an HTML item if it contains HTML
+            html_hints = ['<', '>', '&lt;', '&gt;']
+            if any(map(lambda x: x in result.heading, html_hints)):
+                sr.addHtmlItem(result.heading, result)
+                if not i % 4:
+                    q_app.processEvents()
+                i += 1
+            else:
+                item = QListWidgetItem(result.heading)
+                item.setData(Qt.UserRole, result)
+                sr.addItem(item)
             #item = QtGui.QListWidgetItem(result.heading)
             #item.setData(Qt.UserRole, result)
             #sr.addItem(item)
         sr.scrollToItem(self.ui.searchResults.item(0))
 
     def show_entry(self, entry):
-        html = '<div style="font-family:Baskerville">'+entry.text+'</div>'
+        html = '<div style="font-family:Baskerville; line-height:1.5;">'+entry.text+'</div>'
         self.ui.entryView.setHtml(html)
 
 

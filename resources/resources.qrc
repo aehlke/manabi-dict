@@ -1,0 +1,16 @@
+<RCC>
+  <qresource prefix="images">
+    <file>icons/toolbar/button-left.png</file>
+    <file>icons/toolbar/button-left-disabled.png</file>
+    <file>icons/toolbar/button-left-pressed.png</file>
+    <file>icons/toolbar/button-right.png</file>
+    <file>icons/toolbar/button-right-disabled.png</file>
+    <file>icons/toolbar/button-right-pressed.png</file>
+    <file>icons/toolbar/text-bigger.png</file>
+    <file>icons/toolbar/text-bigger-disabled.png</file>
+    <file>icons/toolbar/text-bigger-pressed.png</file>
+    <file>icons/toolbar/text-smaller.png</file>
+    <file>icons/toolbar/text-smaller-disabled.png</file>
+    <file>icons/toolbar/text-smaller-pressed.png</file>
+  </qresource>
+</RCC>
