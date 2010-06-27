@@ -18,6 +18,7 @@ from msegmentedbutton import MSegmentedButton
 
 #from epywing.manager 
 from epywing.uris import route as route_dictionary_uri
+from epywing.history import HistoryManager
 
 
 
@@ -33,15 +34,20 @@ class Dictionary(QMainWindow):
         super(Dictionary, self).__init__(parent)
 
         self.book_manager = book_manager
+        self.history = HistoryManager()
         self.settings = QSettings()
 
+        self._current_entry = None
+        #self._staged_back_item = None
         self._results_last_shown_at = 0
 
         self._finishedUiSetup = False
         self.setupUi()
         self.setupMacUi()
         self.restoreUiState()
+        self.setupFinalUi()
         self._finishedUiSetup = True
+
 
         #self.ui.searchField.setText('test')
         #self.on_searchField_returnPressed()
@@ -100,10 +106,6 @@ class Dictionary(QMainWindow):
 
         # toolbar icons
         
-        # hide the existing non-mac ones
-        for action in [ui.actionBack, ui.actionForward, ui.actionDecreaseFontSize, ui.actionIncreaseFontSize]:
-            action.setVisible(False)
-
         self.ui.history_buttons = MSegmentedButton(parent=self)
         url_base = ':/images/icons/toolbar/button-'
         ui.history_buttons.left_button.setImageUrls(url_base + 'left.png', url_base + 'left-pressed.png', url_base + 'left-disabled.png')
@@ -112,6 +114,10 @@ class Dictionary(QMainWindow):
         ui.history_buttons.right_button.clicked.connect(lambda: ui.actionForward.trigger())
         ui.navToolbar.addWidget(ui.history_buttons)
 
+        # hide the existing non-mac ones
+        for action in [ui.actionBack, ui.actionForward, ui.actionDecreaseFontSize, ui.actionIncreaseFontSize]:
+            action.setVisible(False)
+
         ui.text_size_buttons = MSegmentedButton(parent=self)
         url_base = ':/images/icons/toolbar/text-'
         ui.text_size_buttons.left_button.setImageUrls(url_base + 'smaller.png', url_base + 'smaller-pressed.png', url_base + 'smaller-disabled.png')
@@ -119,6 +125,11 @@ class Dictionary(QMainWindow):
         ui.text_size_buttons.left_button.clicked.connect(lambda: ui.actionDecreaseFontSize.trigger())
         ui.text_size_buttons.right_button.clicked.connect(lambda: ui.actionIncreaseFontSize.trigger())
         ui.navToolbar.addWidget(ui.text_size_buttons)
+
+    def setupFinalUi(self):
+        '''The last UI setup method to be called.
+        '''
+        self.refresh_history_buttons()
 
 
     def restoreUiState(self):
@@ -131,6 +142,7 @@ class Dictionary(QMainWindow):
 
 
     # Search field UI
+    # ---------------
     
     def on_searchField_returnPressed(self):
         sr, sf = self.ui.searchResults, self.ui.searchField
@@ -142,33 +154,40 @@ class Dictionary(QMainWindow):
             #TODO see todo file for notes on this: #sf.setText(sr.currentItem().text())
             self.ui.entryView.setFocus()
             #sf.selectAll()
+            self.stage_history()
 
     def on_searchField_keyUpPressed(self):
         sr = self.ui.searchResults
 
         if sr.currentRow() > 0:
             sr.setCurrentRow(sr.currentRow() - 1)
+            self.stage_history()
 
     def on_searchField_keyDownPressed(self):
         sr = self.ui.searchResults
         if sr.currentRow() < sr.count() - 1:
             sr.setCurrentRow(sr.currentRow() + 1)
+            self.stage_history()
 
     def on_searchField_textEdited(self, text):
         self.do_search(unicode(text))
 
     def on_clearSearch_clicked(self):
         sr, sf = self.ui.searchResults, self.ui.searchField
+        self.push_history()
         sr.clear()
         sf.search_field.setFocus()
         
 
     # Search results UI
+    # -----------------
 
     def on_searchResults_currentItemChanged(self, current, previous):
         if current:
             item_data = current.data(Qt.UserRole).toPyObject()
             self.show_entry(item_data)
+
+    #def on_searchResults_
 
     def on_searchResults_lostFocus(self):
         pass
@@ -178,8 +197,14 @@ class Dictionary(QMainWindow):
 
 
     # Entry view UI
+    # -------------
+    
     def on_entryView_linkClicked(self, url):
         url = unicode(url.toString())
+
+        self.stage_history()
+        self.push_history()
+
         if '#' in url:
             # it contains a hash, which will scroll the view to the given named anchor
             hash_string = url.split('#')[-1]
@@ -187,9 +212,11 @@ class Dictionary(QMainWindow):
         else:
             resource = route_dictionary_uri(url, self.book_manager.books.values())
             self.show_entry(resource)
+        self.stage_history()
 
 
     # Other UI
+    # --------
 
     @pyqtSignature('int')
     def on_selectBook_currentIndexChanged(self, index):
@@ -204,10 +231,16 @@ class Dictionary(QMainWindow):
 
 
     # toolbar actions
+    # ---------------
 
     @pyqtSignature('')
     def on_actionBack_triggered(self):
-        print 'back'
+        self.go_back()
+
+    @pyqtSignature('')
+    def on_actionForward_triggered(self):
+        self.go_forward()
+
 
     @pyqtSignature('')
     def on_actionDecreaseFontSize_triggered(self):
@@ -219,6 +252,7 @@ class Dictionary(QMainWindow):
 
 
     # menu actions
+    # ------------
 
     @pyqtSignature('')
     def on_actionPreferences_triggered(self):
@@ -232,6 +266,82 @@ class Dictionary(QMainWindow):
 
 
     # general methods
+    # ---------------
+
+    def go_back(self):
+        '''Go back one history item.
+        '''
+        self._go_history(-1)
+    
+    def go_forward(self):
+        '''Go forward one history item.
+        '''
+        self._go_history(1)
+
+    def _go_history(self, index):
+        '''Go forward if positive, back if negative.
+        '''
+        #self.push_history()
+        self.stage_history()
+        try:
+            back_item = self.history.go(index)
+            print 'going {0} to:'.format(index),
+            print back_item
+            print len(self.history)
+            self.show_entry(back_item['entry'])
+            #self.show_results(back_item['search_results'])
+        except IndexError:
+            # already at edge of history
+            print 'indexerror!'
+            pass
+        self.refresh_history_buttons()
+        
+
+    def push_history(self):
+        '''Pushes the currently staged back item to the history manager.
+        We push a dictionary rather than just a URI because we want to load both search results and the entry when going back.
+        '''
+        #print self.history
+        #if self._staged_back_item:
+        if self.history.current_location:
+            print 'pushing staged location',
+            print self.history.current_location
+            #print self.staged_back_item
+            #self.history.push(self._staged_back_item)
+            self.history.push()
+            #print self.history._back
+            #self._staged_back_item = None
+        print len(self.history)
+        self.refresh_history_buttons()
+        #print self.history
+
+    def stage_history(self):
+        '''Set the staged back item to the current entry and search context.
+        '''
+        staged_back_item = {
+            'entry': self._current_entry,
+            #'search_results': self._current_results,
+            #'': 
+        }
+        self.history.current_location = staged_back_item
+        print 'staging:',
+        print staged_back_item
+        print len(self.history)
+        #print self.history
+        #print 'staging:',
+        #print self._staged_back_item
+
+    def refresh_history_buttons(self):
+        '''Enable or disable the history buttons depending on the history state.
+        '''
+        back_enabled = bool(self.history.back_items)
+        self.ui.actionBack.setEnabled(back_enabled)
+        self.ui.history_buttons.left_button.setEnabled(back_enabled)
+
+        forward_enabled = bool(self.history.forward_items)
+        self.ui.actionForward.setEnabled(forward_enabled)
+        self.ui.history_buttons.right_button.setEnabled(forward_enabled)
+
 
     def zoom_entry_view(self, zoom_delta):
         ev = self.ui.entryView
@@ -314,6 +424,7 @@ class Dictionary(QMainWindow):
         '''
         ran_at = time.time()
         self._results_last_shown_at = ran_at
+        self._current_results = results
         #self._show_results_queue.append(queue_time)
         sr = self.ui.searchResults
         sr.clear()
@@ -340,6 +451,7 @@ class Dictionary(QMainWindow):
         sr.scrollToItem(self.ui.searchResults.item(0))
 
     def show_entry(self, entry):
+        self._current_entry = entry
         html = '<div style="font-family:Baskerville; line-height:1.5;">'+entry.text+'</div>'
         self.ui.entryView.setHtml(html)
 

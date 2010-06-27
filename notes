@@ -9,3 +9,31 @@ http://www.replicator.org/node/2
 How can I display rich text in a QTable? Simply use QSimpleRichText to draw the text in a reimplemented QTableItem::paint().
 http://qt.nokia.com/developer/faqs/12
 
+
+
+--------
+history management
+
+times to push to history:
+ - search result clicked & current item changes
+ - link clicked which loads a new entry
+ - search result list changes after it had received focus on an entry.
+   push the last entry that was highlighted, if it wasn't already pushed.
+ - back is pushed, when results list had input focus
+
+self.staged_back
+ - up/down
+ - first enter = enter which highlights a result
+ - clicked, i guess
+
+when to push staged_back:
+ - search changes
+
+when link is clicked:
+ - push current entry
+
+have to handle hash changes in history, not just entries
+
+up/down changes results list
+page up/page down scrolls entry view
+
