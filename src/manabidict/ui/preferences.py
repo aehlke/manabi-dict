@@ -4,6 +4,7 @@ from PyQt4.QtCore import *
 from PyQt4.Qt import Qt
 import sys
 import os
+from os import path
 
 #from forms.dictionary import Ui_DictionaryWindow
 
@@ -118,14 +119,15 @@ class Preferences(QDialog):
         tbl = self.ui.booksTable
         for book_id, book in books.items():
             # use the first subbook name as the label
-            if book.subbooks:
-                label = book.subbooks[0]['name']
-            else:
-                continue
+            label = book.name
+            #if book.subbooks:
+                #label = book.subbooks[0]['name']
+            #else:
+                #continue
             label_item = QTableWidgetItem(label)
             label_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsEditable | Qt.ItemIsSelectable)
 
-            dictionary_item = QTableWidgetItem(book.name)
+            dictionary_item = QTableWidgetItem(path.basename(book.book_path))
             dictionary_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
             dictionary_item.setData(Qt.UserRole, book_id) # keep the book ID in the item's data
             row = tbl.rowCount()

@@ -6,7 +6,8 @@ from PyQt4.Qt import Qt
 from msmoothscroller import MSmoothScroller
 
 class MWebView(QtWebKit.QWebView):
-
+    '''This uses a custom scrollbar which is more flexible.
+    '''
     def __init__(self, parent=None):
         '''
         `user` is a QAbstractScrollArea
@@ -41,6 +42,7 @@ class MWebView(QtWebKit.QWebView):
         self.page().geometryChangeRequested.connect(lambda geom: self._updateScrollBarMax())
         self.loadStarted.connect(lambda: self._refreshScrollBar())
         #self.loadFinished.connect(lambda ok: self._refreshScrollBar())
+        self.loadFinished.connect(lambda ok: self._updateScrollBarMax())
         self.page().mainFrame().contentsSizeChanged.connect(lambda size: self._refreshScrollBar())
         #self.onResize.connect(self._geometryChangeRequested)
         self._ignore_value_changed = False

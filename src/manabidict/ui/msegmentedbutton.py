@@ -11,11 +11,13 @@ class MInnerToolButton(QToolButton):
             QToolButton {{ border-image: url({0}); }}
             QToolButton:pressed {{ border-image: url({1}); }}
             QToolButton:disabled {{ border-image: url({2}); }}
+            QToolButton::menu-indicator {{ image: none; }}
             '''.format(normal, pressed, disabled)
         self.setStyleSheet(stylesheet)
 
     def setImageUrls(self, normal, pressed, disabled):
         self._set_button_urls(normal, pressed, disabled)
+
 
 class MSegmentedButton(QWidget):
     '''Segmented button (containing 2 parts), like the Cocoa one.

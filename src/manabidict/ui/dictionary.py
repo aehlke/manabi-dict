@@ -9,6 +9,7 @@ import sys
 import os
 from itertools import islice
 import time
+from functools import partial
 
 from preferences import Preferences
 from mspacer import MSpacer
@@ -19,6 +20,7 @@ from msegmentedbutton import MSegmentedButton
 #from epywing.manager 
 from epywing.uris import route as route_dictionary_uri
 from epywing.history import HistoryManager
+from epywing.util import strip_tags
 
 
 
@@ -38,6 +40,7 @@ class Dictionary(QMainWindow):
         self.settings = QSettings()
 
         self._current_entry = None
+        self._current_entry_hash = None
         #self._staged_back_item = None
         self._results_last_shown_at = 0
 
@@ -81,11 +84,6 @@ class Dictionary(QMainWindow):
         #spacer.setOrientation(Qt.Horizontal)
         ui.selectBook.setContentsMargins(0, 0, 0, 0) #l, t, r, b
         ui.selectBook.setMinimumHeight(26)
-        #ui.selectBookContainer = QWidget()
-        #ui.selectBookContainer.setLayout(QHBoxLayout())
-        #ui.selectBookContainer.layout().setContentsMargins(0, 0, 0, 0)
-        #ui.selectBookContainer.layout().setSpacing(0)
-        #ui.selectBookContainer.layout().addWidget(ui.selectBook)
         ui.dictionaryToolbar.insertWidget(None, spacer)
         ui.dictionaryToolbar.insertWidget(None, ui.selectBook)
         #ui.dictionaryToolbar.insertWidget(None, ui.selectBookContainer)
@@ -106,6 +104,7 @@ class Dictionary(QMainWindow):
 
         # toolbar icons
         
+        # history buttons
         self.ui.history_buttons = MSegmentedButton(parent=self)
         url_base = ':/images/icons/toolbar/button-'
         ui.history_buttons.left_button.setImageUrls(url_base + 'left.png', url_base + 'left-pressed.png', url_base + 'left-disabled.png')
@@ -113,6 +112,20 @@ class Dictionary(QMainWindow):
         ui.history_buttons.left_button.clicked.connect(lambda: ui.actionBack.trigger())
         ui.history_buttons.right_button.clicked.connect(lambda: ui.actionForward.trigger())
         ui.navToolbar.addWidget(ui.history_buttons)
+
+        # context menus for history buttons
+        ui.back_history_menu = QMenu(parent=ui.history_buttons.left_button)
+        ui.forward_history_menu = QMenu(parent=ui.history_buttons.right_button)
+
+        ui.history_buttons.left_button.setPopupMode(QToolButton.DelayedPopup)
+        ui.history_buttons.right_button.setPopupMode(QToolButton.DelayedPopup)
+
+        ui.history_buttons.left_button.setMenu(ui.back_history_menu)
+        ui.history_buttons.right_button.setMenu(ui.forward_history_menu)
+
+        ui.back_history_menu.aboutToShow.connect(lambda: self.refresh_back_history_menu())
+        ui.forward_history_menu.aboutToShow.connect(lambda: self.refresh_forward_history_menu())
+        
 
         # hide the existing non-mac ones
         for action in [ui.actionBack, ui.actionForward, ui.actionDecreaseFontSize, ui.actionIncreaseFontSize]:
@@ -209,7 +222,9 @@ class Dictionary(QMainWindow):
             # it contains a hash, which will scroll the view to the given named anchor
             hash_string = url.split('#')[-1]
             self.ui.entryView.scrollToAnchor(hash_string)
+            self._current_entry_hash = hash_string
         else:
+            self._current_entry_hash = None
             resource = route_dictionary_uri(url, self.book_manager.books.values())
             self.show_entry(resource)
         self.stage_history()
@@ -221,7 +236,10 @@ class Dictionary(QMainWindow):
     @pyqtSignature('int')
     def on_selectBook_currentIndexChanged(self, index):
         self.do_search()
-        book_id = self.selected_book().id
+        if index == -1:
+            book_id = None
+        else:
+            book_id = self.selected_book().id
         if self._finishedUiSetup:
             self.settings.setValue('ui_state/selected_book_id', book_id)
 
@@ -268,6 +286,22 @@ class Dictionary(QMainWindow):
     # general methods
     # ---------------
 
+    def _refresh_history_menu(self, menu, history_items, direction):
+        '''`direction` is 1 or -1 and indicates if this is for forward or back.
+        '''
+        menu.clear()
+        for index, item in enumerate(history_items, start=1):
+            action = QAction(item['label'], menu)
+            func = partial(self._go_history, index * direction)
+            action.triggered.connect(func)
+            menu.addAction(action)
+
+    def refresh_back_history_menu(self):
+        self._refresh_history_menu(self.ui.back_history_menu, self.history.back_items, -1)
+        
+    def refresh_forward_history_menu(self):
+        self._refresh_history_menu(self.ui.forward_history_menu, self.history.forward_items, 1)
+
     def go_back(self):
         '''Go back one history item.
         '''
@@ -282,14 +316,20 @@ class Dictionary(QMainWindow):
         '''Go forward if positive, back if negative.
         '''
         #self.push_history()
-        self.stage_history()
+        self.stage_history(clear_forward_items=False)
         try:
             back_item = self.history.go(index)
-            print 'going {0} to:'.format(index),
-            print back_item
+            print 'going {0} to:'.format(index)#,
+            #print back_item
             print len(self.history)
+            if 'search_results' in back_item:
+                self.show_results(back_item['search_results'])
+                self.ui.searchResults.setCurrentRow(back_item['search_results_current_row'])
             self.show_entry(back_item['entry'])
-            #self.show_results(back_item['search_results'])
+            if 'entry_hash' in back_item:
+                self.ui.entryView.scrollToAnchor(back_item['entry_hash'])
+            if 'book' in back_item:
+                self.select_book(back_item['book'])
         except IndexError:
             # already at edge of history
             print 'indexerror!'
@@ -305,28 +345,45 @@ class Dictionary(QMainWindow):
         #if self._staged_back_item:
         if self.history.current_location:
             print 'pushing staged location',
-            print self.history.current_location
+            #print self.history.current_location
             #print self.staged_back_item
             #self.history.push(self._staged_back_item)
             self.history.push()
             #print self.history._back
             #self._staged_back_item = None
-        print len(self.history)
+        #print len(self.history)
         self.refresh_history_buttons()
         #print self.history
 
-    def stage_history(self):
+    def stage_history(self, clear_forward_items=True, label=None):
         '''Set the staged back item to the current entry and search context.
+        `label` is what the history item will show as in menus. Defaults to the entry heading.
         '''
+        entry = self._current_entry
+
+        if not label:
+            if entry.heading:
+                label = strip_tags(entry.heading)
+            else:
+                lines = strip_tags(entry.text.replace('<br>', '\n')).split()
+                label = lines[0] if lines else ''
+
         staged_back_item = {
-            'entry': self._current_entry,
-            #'search_results': self._current_results,
-            #'': 
+            'label': label,
+            'book': self.selected_book(),
+            'entry': entry,
+            'search_results': self._current_results,
+            'search_results_current_row': self.ui.searchResults.currentRow(),
+            #'':
         }
+        if self._current_entry_hash:
+            staged_back_item['entry_hash'] = self._current_entry_hash
         self.history.current_location = staged_back_item
-        print 'staging:',
-        print staged_back_item
-        print len(self.history)
+        if clear_forward_items:
+            self.history.forward_items = []
+        #print 'staging:',
+        #print staged_back_item
+        #print len(self.history)
         #print self.history
         #print 'staging:',
         #print self._staged_back_item
@@ -362,6 +419,14 @@ class Dictionary(QMainWindow):
         if not sb.count(): return None
         book_id = unicode(sb.itemData(sb.currentIndex()).toString())
         return self.book_manager.books[book_id]
+    
+    def select_book(self, book):
+        '''Selects the book given an EpwingBook instance.
+        '''
+        sb = self.ui.selectBook
+        index = sb.findData(book.id)
+        if index != -1:
+            sb.setCurrentIndex(index)
 
     def reload_books_list(self):
         '''Fills the book combobox with available books.
@@ -371,8 +436,7 @@ class Dictionary(QMainWindow):
         current_book_id = unicode(sb.itemData(sb.currentIndex()).toString())# if sb.currentIndex() else None
         sb.clear()
         for book_id, book in self.book_manager.books.items():
-            if not book.subbooks: continue
-            sb.addItem(book.subbooks[0]['name'], book_id)
+            sb.addItem(book.name, book_id)
         index = sb.findData(current_book_id)
         if index != -1:
             sb.setCurrentIndex(index)
