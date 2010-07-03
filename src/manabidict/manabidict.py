@@ -10,6 +10,7 @@ from epywing import epwing
 #from epywing import bookmanager.BookManager
 #from bookmanager import BookManager
 from epywing.bookmanager import BookManager
+#from epywing.bookfilter import load_filter_plugins
 
 from eb import eb_initialize_library
 from ui.dictionary import Dictionary
@@ -49,7 +50,6 @@ class ManabiDictApplication(QApplication):
         if paths_to_remove:
             book_paths = [_ for _ in book_paths if _ not in paths_to_remove]
             self.settings.setValue('book_manager/book_paths', book_paths)
-                
 
 
     def setupUi(self):
