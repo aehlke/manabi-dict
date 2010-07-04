@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="images">
+    <file>DisclosureDown.png</file>
+    <file>DisclosureUp.png</file>
     <file>searchbar/history-button-disabled.png</file>
     <file>searchbar/clear-button-pressed.png</file>
     <file>searchbar/background.png</file>
@@ -18,5 +20,8 @@
     <file>icons/toolbar/text-smaller.png</file>
     <file>icons/toolbar/text-smaller-disabled.png</file>
     <file>icons/toolbar/text-smaller-pressed.png</file>
+  </qresource>
+  <qresource prefix="css">
+    <file>entryview.css</file>
   </qresource>
 </RCC>

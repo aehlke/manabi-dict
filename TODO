@@ -26,6 +26,7 @@ drag-n-drop for folders into the Preferences table to install a dictionary
 
 combine ~suffix entries back into main entry somehow (probably per dictionary, after detecting which dict it is)
 
+sanseido super daijirin sometimes returns multiple references to the same entry in search results, thereby messing up category search
 
 
 IDEAS:

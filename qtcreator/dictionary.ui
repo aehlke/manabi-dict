@@ -247,7 +247,7 @@
            <enum>QListView::ListMode</enum>
           </property>
           <property name="uniformItemSizes">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
          <widget class="MWebView" name="entryView">

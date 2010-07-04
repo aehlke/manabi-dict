@@ -10,10 +10,12 @@ import os
 from itertools import islice
 import time
 from functools import partial
+import inspect
 
 from preferences import Preferences
 from mspacer import MSpacer
 from msegmentedbutton import MSegmentedButton
+
 
 #from forms.dictionary import Ui_DictionaryWindow
 
@@ -21,6 +23,7 @@ from msegmentedbutton import MSegmentedButton
 from epywing.uris import route as route_dictionary_uri
 from epywing.history import HistoryManager
 from epywing.util import strip_tags
+from epywing.categories import BookCategory
 
 
 
@@ -66,6 +69,9 @@ class Dictionary(QMainWindow):
         ui.entryView.setScrollBar(ui.entryVerticalScrollBar, scroll_bar_container=ui.entryVerticalScrollBarContainer)
         # all links should fire the linkClicked signal
         ui.entryView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        #entry_css = QUrl('data:text/css, body{font-family:Baskerville;color:orange}')#:/css/entryview.css')
+        #print entry_css
+        #ui.entryView.settings().setUserStyleSheetUrl(entry_css)
 
         ui.searchField.search_field.setFocus() #FIXME
         #ui.entryView.setSmoothScrolling(True)
@@ -148,8 +154,8 @@ class Dictionary(QMainWindow):
     def restoreUiState(self):
         '''Restores UI state from the last time it was opened.
         '''
-        book_id = unicode(self.settings.value('ui_state/selected_book_id').toString())
-        index = self.ui.selectBook.findData(book_id)
+        index = int(self.settings.value('ui_state/selected_book_index').toPyObject())
+        #index = self.ui.selectBook.findData(book_id)
         if index != -1:
             self.ui.selectBook.setCurrentIndex(index)
 
@@ -198,7 +204,12 @@ class Dictionary(QMainWindow):
     def on_searchResults_currentItemChanged(self, current, previous):
         if current:
             item_data = current.data(Qt.UserRole).toPyObject()
-            self.show_entry(item_data)
+            # if this result is a multi-dictionary search result, 
+            # it will be a list. Otherwise it will be an Entry.
+            if isinstance(item_data, (list, tuple)):
+                self.show_entries(item_data)
+            else:
+                self.show_entry(item_data)
 
     #def on_searchResults_
 
@@ -236,12 +247,8 @@ class Dictionary(QMainWindow):
     @pyqtSignature('int')
     def on_selectBook_currentIndexChanged(self, index):
         self.do_search()
-        if index == -1:
-            book_id = None
-        else:
-            book_id = self.selected_book().id
         if self._finishedUiSetup:
-            self.settings.setValue('ui_state/selected_book_id', book_id)
+            self.settings.setValue('ui_state/selected_book_index', int(index))
 
     @pyqtSignature('int')
     def on_searchMethod_currentIndexChanged(self, index):
@@ -403,9 +410,9 @@ class Dictionary(QMainWindow):
     def zoom_entry_view(self, zoom_delta):
         ev = self.ui.entryView
         new_zoom = ev.zoomFactor() + (ev.zoomFactor() * zoom_delta)
+
         if new_zoom >= self.ZOOM_RANGE[0] and new_zoom <= self.ZOOM_RANGE[1]:
             ev.setZoomFactor(ev.zoomFactor() + zoom_delta)
-
 
     def selected_search_method(self):
         '''Returns the string ID of the currently selected search method.
@@ -413,12 +420,18 @@ class Dictionary(QMainWindow):
         return unicode(self.ui.searchMethod.itemData(self.ui.searchMethod.currentIndex()).toString())
 
     def selected_book(self):
-        '''Returns the currently selected book's EpwingBook instance.
+        '''Returns the currently selected book's EpwingBook instance,
+        or BookCategory instance if a category is selected instead.
         '''
         sb = self.ui.selectBook
         if not sb.count(): return None
-        book_id = unicode(sb.itemData(sb.currentIndex()).toString())
-        return self.book_manager.books[book_id]
+
+        selected_data = sb.itemData(sb.currentIndex())
+        if selected_data.type() == QVariant.String:
+            selected_data = selected_data.toString()
+            return self.book_manager.books[unicode(selected_data)]
+        else:
+            return selected_data.toPyObject()
     
     def select_book(self, book):
         '''Selects the book given an EpwingBook instance.
@@ -431,13 +444,34 @@ class Dictionary(QMainWindow):
     def reload_books_list(self):
         '''Fills the book combobox with available books.
         Call this after updating installed book preferences, and on first launch.
+
+        Also adds the categories of available books, for searching across multiple books.
         '''
         sb = self.ui.selectBook
-        current_book_id = unicode(sb.itemData(sb.currentIndex()).toString())# if sb.currentIndex() else None
+        selected_data = sb.itemData(sb.currentIndex())
+        if selected_data.type() == QVariant.String:
+            selected_data = selected_data.toString()
+        else:
+            selected_data = selected_data.toPyObject()
+        #current_book_id = unicode(sb.itemData(sb.currentIndex()).toString())# if sb.currentIndex() else None
         sb.clear()
+
+        # add 'all' option
+        sb.addItem('All', None)
+        sb.insertSeparator(sb.count())
+        
+        # add categories
+        for category in self.book_manager.categories:
+            sb.addItem(category.label, category)
+        else:
+            # add separator
+            sb.insertSeparator(sb.count())
+
+        # add books
         for book_id, book in self.book_manager.books.items():
             sb.addItem(book.name, book_id)
-        index = sb.findData(current_book_id)
+
+        index = sb.findData(selected_data)
         if index != -1:
             sb.setCurrentIndex(index)
         else:
@@ -472,14 +506,24 @@ class Dictionary(QMainWindow):
             sm.addItem(name, id)
  
 
-    def do_search(self, query=None, search_method=None, max_results_per_book=30):
-        book = self.selected_book()
-        if not book: return
+    def do_search(self, query=None, search_method=None, max_results_per_book=25):
+        selected_book = self.selected_book()
+        #if not selected_book: return
+
         if not query:
             query = unicode(self.ui.searchField.search_field.text())
         if not search_method:
             search_method = self.selected_search_method()
-        results = list(islice(book.search(query, search_method=search_method), 0, max_results_per_book))
+
+        if selected_book is None:
+            # search all
+            results = self.book_manager.search_all(query, search_method=search_method, max_results_per_book=max_results_per_book)
+        elif inspect.isclass(selected_book) and issubclass(selected_book, BookCategory):
+            # category search
+            results = self.book_manager.search_category(selected_book, query, search_method=search_method, max_results_per_book=max_results_per_book)
+        else:
+            results = list(islice(selected_book.search(query, search_method=search_method), 0, max_results_per_book))
+
         #results = self.book_manager.search_all(query, search_method='prefix')#, container=container)
         self.show_results(results)
     
@@ -494,30 +538,107 @@ class Dictionary(QMainWindow):
         sr.clear()
         q_app = QApplication.instance()
         q_app.processEvents()
+
         i = 0
-        for result in results:
-            if ran_at < self._results_last_shown_at:
-                return
+
+        def add_result(heading, result):
             # add an HTML item if it contains HTML
             html_hints = ['<', '>', '&lt;', '&gt;']
-            if any(map(lambda x: x in result.heading, html_hints)):
-                sr.addHtmlItem(result.heading, result)
+
+            if any(map(lambda x: x in heading, html_hints)):
+                sr.addHtmlItem(heading, result)
+            else:
+                item = QListWidgetItem(heading)
+                item.setData(Qt.UserRole, result)
+                sr.addItem(item)
+
+        if isinstance(results, dict):
+            def sort_key(e):
+                key = e[0]
+                return key.lower().strip()
+
+            for heading, entries in sorted(results.items(), key=sort_key):
+                if ran_at < self._results_last_shown_at:
+                    return
+                add_result(heading, entries)
                 if not i % 4:
                     q_app.processEvents()
                 i += 1
-            else:
-                item = QListWidgetItem(result.heading)
-                item.setData(Qt.UserRole, result)
-                sr.addItem(item)
-            #item = QtGui.QListWidgetItem(result.heading)
-            #item.setData(Qt.UserRole, result)
-            #sr.addItem(item)
+        else:
+            for result in results:
+                if ran_at < self._results_last_shown_at:
+                    return
+                add_result(result.heading, result)
+                if not i % 4:
+                    q_app.processEvents()
+                i += 1
+
         sr.scrollToItem(self.ui.searchResults.item(0))
+
+    def _set_entryView_body(self, body_html, head_html=u''):
+        '''Sets the entryView's HTML to be `body_html` wrapped with the propery html and body tags.
+        '''
+        html = u'''
+            <html>
+                <head><link rel="stylesheet" type="text/css" href="qrc:/css/entryview.css">{0}</head>
+                <body>{1}</body>
+            </html>'''.format(head_html, body_html)
+        self.ui.entryView.setHtml(html)
 
     def show_entry(self, entry):
         self._current_entry = entry
-        html = '<div style="font-family:Baskerville; line-height:1.5;">'+entry.text+'</div>'
-        self.ui.entryView.setHtml(html)
+        self._set_entryView_body(entry.text)
+
+    def show_entries(self, entries):
+        '''Display a list of entries, presumably from multiple dictionaries.
+        They will be separated by a divider that can be clicked to hide its entry.
+        '''
+        self._current_entry = entries
+        html = u''
+        hide_entry_js = u'''
+            <script type="text/javascript">
+                function toggle_entry(entry_id, arrow_down_id, arrow_up_id) {
+                    var entry = document.getElementById(entry_id);
+                    var arrow_down = document.getElementById(arrow_down_id);
+                    var arrow_up = document.getElementById(arrow_up_id);
+
+                    if (entry.style.display == 'none') {
+                        entry.style.display = 'block';
+                        arrow_down.style.display = 'block';
+                        arrow_up.style.display = 'none';
+                    } else {
+                        entry.style.display = 'none';
+                        arrow_down.style.display = 'none';
+                        arrow_up.style.display = 'block';
+                    }
+                }
+            </script>
+        '''
+        divider = u'''
+            <table width="98%" class="dict-divider" onclick="toggle_entry('entry-{0}', 'arrow-down-{0}', 'arrow-up-{0}');">
+                <tr>
+                    <td>
+                        <img src="qrc:/images/DisclosureDown.png" class="dict-divider-arrow" id="arrow-down-{0}" style="display:block">
+                        <img src="qrc:/images/DisclosureUp.png" class="dict-divider-arrow" id="arrow-up-{0}" style="display:none">
+                    </td>
+                    <td width="49%"><hr style="border-style:solid none none none; border-width:1px"></td>
+                    <td style="white-space:nowrap" class="dict-name">{1}</td>
+                    <td width="49%"><hr style="border-style:solid none none none; border-width:1px"></td>
+                </tr>
+            </table>
+        '''
+        entry_counter = 0
+
+        for entry in entries:
+            # add the divider with the entry's book title
+            html += divider.format(entry_counter, entry.parent.name)
+
+            # add the entry's text
+            html += u'<div class="dict-entry" id="entry-{0}">{1}</div>'.format(entry_counter, entry.text)
+
+            entry_counter += 1
+            
+        self._set_entryView_body(html, head_html=hide_entry_js)
 
 
 
