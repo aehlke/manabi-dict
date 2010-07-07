@@ -28,6 +28,7 @@ combine ~suffix entries back into main entry somehow (probably per dictionary, a
 
 sanseido super daijirin sometimes returns multiple references to the same entry in search results, thereby messing up category search
 
+ISO mounting somehow
 
 IDEAS:
 allow multi select on the results list, to show multiple entries?
@@ -41,6 +42,8 @@ BUGS:
 the sample test ej,je dict shows twice as many entries as it should (misdetermining entry endpoint)
 resize book select on switch
 mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
+
+search method detection isnt implemented, so one of the kojien dicts breaks (also what to do about dicts with no search methods?)
 
 epywing bugs:
 need to change < and > to entities if theyre part of the text

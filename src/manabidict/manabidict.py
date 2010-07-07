@@ -10,6 +10,7 @@ from epywing import epwing
 #from epywing import bookmanager.BookManager
 #from bookmanager import BookManager
 from epywing.bookmanager import BookManager
+#import epywing.filters.linkifywords
 #from epywing.bookfilter import load_filter_plugins
 
 from eb import eb_initialize_library
