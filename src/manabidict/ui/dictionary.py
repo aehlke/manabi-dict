@@ -7,7 +7,7 @@ from PyQt4.QtWebKit import QWebPage
 #import Qt
 import sys
 import os
-from itertools import islice
+from itertools import islice, imap
 import time
 from functools import partial
 import inspect
@@ -26,6 +26,22 @@ from epywing.util import strip_tags
 from epywing.categories import BookCategory
 
 
+class JavaScriptBridge(QObject):
+    '''Simple class for bridging JS to Python.
+    '''
+    def __init__(self, dictionary_window):
+        QObject.__init__(self, dictionary_window)
+        self.setObjectName('JavaScriptBridge')
+        self.dictionary_window = dictionary_window
+
+    #@pyqtSlot(unicode)
+    @pyqtSignature('QString')
+    def search(self, query):
+        query = unicode(query)
+        self.dictionary_window.select_book(all_books=True)
+        self.dictionary_window.do_search(query, search_method='exact')
+        #TODO don't force 'exact' search, but wait until 'All' book search result sorting is better
+
 
 class Dictionary(QMainWindow):
 
@@ -34,6 +50,7 @@ class Dictionary(QMainWindow):
 
     ZOOM_DELTA = 0.10
     ZOOM_RANGE = (0.4, 4.0,)
+
 
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
@@ -50,6 +67,7 @@ class Dictionary(QMainWindow):
         self._finishedUiSetup = False
         self.setupUi()
         self.setupMacUi()
+        self.setupJavaScriptBridge()
         self.restoreUiState()
         self.setupFinalUi()
         self._finishedUiSetup = True
@@ -144,6 +162,16 @@ class Dictionary(QMainWindow):
         ui.text_size_buttons.left_button.clicked.connect(lambda: ui.actionDecreaseFontSize.trigger())
         ui.text_size_buttons.right_button.clicked.connect(lambda: ui.actionIncreaseFontSize.trigger())
         ui.navToolbar.addWidget(ui.text_size_buttons)
+
+    def _setupJavaScriptBridge(self):
+        self.ui.entryView.page().mainFrame().addToJavaScriptWindowObject('manabi', self.javascript_bridge)
+
+    def setupJavaScriptBridge(self):
+        '''Sets up the JS bridge for entryView.
+        '''
+        self.javascript_bridge = JavaScriptBridge(self)
+        self._setupJavaScriptBridge()
+        self.ui.entryView.page().mainFrame().javaScriptWindowObjectCleared.connect(self._setupJavaScriptBridge)
 
     def setupFinalUi(self):
         '''The last UI setup method to be called.
@@ -336,7 +364,7 @@ class Dictionary(QMainWindow):
             if 'entry_hash' in back_item:
                 self.ui.entryView.scrollToAnchor(back_item['entry_hash'])
             if 'book' in back_item:
-                self.select_book(back_item['book'])
+                self.select_book(book=back_item['book'])
         except IndexError:
             # already at edge of history
             print 'indexerror!'
@@ -349,7 +377,9 @@ class Dictionary(QMainWindow):
         We push a dictionary rather than just a URI because we want to load both search results and the entry when going back.
         '''
         #print self.history
-        #if self._staged_back_item:
+        #if self._staged_back_item
+        #FIXME
+        return
         if self.history.current_location:
             print 'pushing staged location',
             #print self.history.current_location
@@ -366,6 +396,8 @@ class Dictionary(QMainWindow):
         '''Set the staged back item to the current entry and search context.
         `label` is what the history item will show as in menus. Defaults to the entry heading.
         '''
+        #FIXME
+        return
         entry = self._current_entry
 
         if not label:
@@ -433,13 +465,16 @@ class Dictionary(QMainWindow):
         else:
             return selected_data.toPyObject()
     
-    def select_book(self, book):
-        '''Selects the book given an EpwingBook instance.
+    def select_book(self, book=None, all_books=False):
+        '''Selects the book given an EpwingBook instance, or everything if `all_books` is True.
         '''
         sb = self.ui.selectBook
-        index = sb.findData(book.id)
-        if index != -1:
-            sb.setCurrentIndex(index)
+        if all_books:
+            sb.setCurrentIndex(0)
+        else:
+            index = sb.findData(book.id)
+            if index != -1:
+                sb.setCurrentIndex(index)
 
     def reload_books_list(self):
         '''Fills the book combobox with available books.
@@ -507,6 +542,8 @@ class Dictionary(QMainWindow):
  
 
     def do_search(self, query=None, search_method=None, max_results_per_book=25):
+        '''Performs search.
+        '''
         selected_book = self.selected_book()
         #if not selected_book: return
 
@@ -541,11 +578,11 @@ class Dictionary(QMainWindow):
 
         i = 0
 
+        html_hints = ['<', '>', '&lt;', '&gt;']
         def add_result(heading, result):
             # add an HTML item if it contains HTML
-            html_hints = ['<', '>', '&lt;', '&gt;']
 
-            if any(map(lambda x: x in heading, html_hints)):
+            if any(imap(lambda x: x in heading, html_hints)):
                 sr.addHtmlItem(heading, result)
             else:
                 item = QListWidgetItem(heading)
@@ -594,7 +631,7 @@ class Dictionary(QMainWindow):
         They will be separated by a divider that can be clicked to hide its entry.
         '''
         self._current_entry = entries
-        html = u''
+        html = [] #u''
         hide_entry_js = u'''
             <script type="text/javascript">
                 function toggle_entry(entry_id, arrow_down_id, arrow_up_id) {
@@ -611,6 +648,17 @@ class Dictionary(QMainWindow):
                         arrow_down.style.display = 'none';
                         arrow_up.style.display = 'block';
                     }
+                }
+
+                function get_text_of_children(node) {
+                    // returns the text of all children of `node`
+                    return 'textContent' in node ? node.textContent : node.innerText;
+                }
+
+                function search(node) {
+                    // performs a search for the given node's text, using whatever search method is selected
+                    var query = get_text_of_children(node);
+                    manabi.search(query);
                 }
             </script>
         '''
@@ -631,13 +679,13 @@ class Dictionary(QMainWindow):
 
         for entry in entries:
             # add the divider with the entry's book title
-            html += divider.format(entry_counter, entry.parent.name)
+            html.append(divider.format(entry_counter, entry.parent.name))
 
             # add the entry's text
-            html += u'<div class="dict-entry" id="entry-{0}">{1}</div>'.format(entry_counter, entry.text)
+            html.append(u'<div class="dict-entry" id="entry-{0}">{1}</div>'.format(entry_counter, entry.text))
 
             entry_counter += 1
-            
+        html = u''.join(html)
         self._set_entryView_body(html, head_html=hide_entry_js)
 
 

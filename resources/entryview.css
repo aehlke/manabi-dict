@@ -18,3 +18,13 @@ hr {
     position: relative;
     top: -2px;
 }
+
+a {
+    color: #2971A7;
+}
+
+.searchable-word:hover {
+    text-decoration: underline;
+    cursor: hand;
+    color: #2971A7;
+}
