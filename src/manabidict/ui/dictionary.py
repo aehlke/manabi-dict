@@ -39,8 +39,7 @@ class JavaScriptBridge(QObject):
     def search(self, query):
         query = unicode(query)
         self.dictionary_window.select_book(all_books=True)
-        self.dictionary_window.do_search(query, search_method='exact')
-        #TODO don't force 'exact' search, but wait until 'All' book search result sorting is better
+        self.dictionary_window.do_search(query)
 
 
 class Dictionary(QMainWindow):
@@ -612,14 +611,42 @@ class Dictionary(QMainWindow):
 
         sr.scrollToItem(self.ui.searchResults.item(0))
 
-    def _set_entryView_body(self, body_html, head_html=u''):
+    def _set_entryView_body(self, body_html):
         '''Sets the entryView's HTML to be `body_html` wrapped with the propery html and body tags.
         '''
-        html = u'''
+        html = u''.join([u'''
             <html>
-                <head><link rel="stylesheet" type="text/css" href="qrc:/css/entryview.css">{0}</head>
-                <body>{1}</body>
-            </html>'''.format(head_html, body_html)
+                <head><link rel="stylesheet" type="text/css" href="qrc:/css/entryview.css">
+                    <script type="text/javascript">
+                        function toggle_entry(entry_id, arrow_down_id, arrow_up_id) {
+                            var entry = document.getElementById(entry_id);
+                            var arrow_down = document.getElementById(arrow_down_id);
+                            var arrow_up = document.getElementById(arrow_up_id);
+
+                            if (entry.style.display == 'none') {
+                                entry.style.display = 'block';
+                                arrow_down.style.display = 'block';
+                                arrow_up.style.display = 'none';
+                            } else {
+                                entry.style.display = 'none';
+                                arrow_down.style.display = 'none';
+                                arrow_up.style.display = 'block';
+                            }
+                        }
+
+                        function get_text_of_children(node) {
+                            // returns the text of all children of `node`
+                            return 'textContent' in node ? node.textContent : node.innerText;
+                        }
+
+                        function search(node) {
+                            // performs a search for the given node's text, using whatever search method is selected
+                            var query = get_text_of_children(node);
+                            manabi.search(query);
+                        }
+                    </script>
+                </head>
+                <body>''', body_html, u'</body></html>'])
         self.ui.entryView.setHtml(html)
 
     def show_entry(self, entry):
@@ -632,36 +659,6 @@ class Dictionary(QMainWindow):
         '''
         self._current_entry = entries
         html = [] #u''
-        hide_entry_js = u'''
-            <script type="text/javascript">
-                function toggle_entry(entry_id, arrow_down_id, arrow_up_id) {
-                    var entry = document.getElementById(entry_id);
-                    var arrow_down = document.getElementById(arrow_down_id);
-                    var arrow_up = document.getElementById(arrow_up_id);
-
-                    if (entry.style.display == 'none') {
-                        entry.style.display = 'block';
-                        arrow_down.style.display = 'block';
-                        arrow_up.style.display = 'none';
-                    } else {
-                        entry.style.display = 'none';
-                        arrow_down.style.display = 'none';
-                        arrow_up.style.display = 'block';
-                    }
-                }
-
-                function get_text_of_children(node) {
-                    // returns the text of all children of `node`
-                    return 'textContent' in node ? node.textContent : node.innerText;
-                }
-
-                function search(node) {
-                    // performs a search for the given node's text, using whatever search method is selected
-                    var query = get_text_of_children(node);
-                    manabi.search(query);
-                }
-            </script>
-        '''
         divider = u'''
             <table width="98%" class="dict-divider" onclick="toggle_entry('entry-{0}', 'arrow-down-{0}', 'arrow-up-{0}');">
                 <tr>
@@ -686,7 +683,7 @@ class Dictionary(QMainWindow):
 
             entry_counter += 1
         html = u''.join(html)
-        self._set_entryView_body(html, head_html=hide_entry_js)
+        self._set_entryView_body(html)
 
 
 
