@@ -49,26 +49,33 @@ class KeyPressFilter(QObject):
     the user enters text, it will focus the field before inserting the text.
     Then the user can always just start typing when they want to start a new search.
     '''
-    #TODO use QInputMethodEvent to handle japanese key input
+    #TODO use QInputMethodEvent to handle japanese key input (must be installed on the app level)
+    #FIXME this breaks for typing in the prefs
 
     def __init__(self, parent=None):
+        '''`parent` must be a window object.
+        '''
         super(KeyPressFilter, self).__init__(parent)
         self.parent = parent
 
     def eventFilter(self, obj, event):
         '''Move focus to searchField if text is being entered.
+        Only handle events for .
         '''
-        if event.type() == QEvent.KeyPress:
-            key_event = QKeyEvent(event)
+        if self.parent.isActiveWindow():
             search_field = self.parent.ui.searchField.search_field
+            if event.type() == QEvent.KeyPress:
+                key_event = QKeyEvent(event)
 
-            if obj is not search_field and key_event.text():
-                search_field.setFocus()
-                search_field.keyPressEvent(event)
-                return True
-            return False
-        else:
-            return QObject.eventFilter(self, obj, event)
+                if obj is not search_field and key_event.text():
+                    search_field.setFocus()
+                    search_field.keyPressEvent(event)
+                    return True
+            elif event.type() == QEvent.InputMethod:
+                input_method_event = QInputMethodEvent(event)
+                print str(dir(input_method_event))
+                #if obj is not search_field
+        return QObject.eventFilter(self, obj, event)
             
 
 
@@ -241,9 +248,9 @@ class Dictionary(QMainWindow):
     # event filter for keyboard events
     # --------
     def setupKeyboardEventFilter(self):
-        self.key_press_filter = KeyPressFilter(self)
-        #q_app = QApplication.instance()
-        self.installEventFilter(self.key_press_filter)
+        self.key_press_filter = KeyPressFilter(parent=self)
+        q_app = QApplication.instance()
+        q_app.installEventFilter(self.key_press_filter)
 
     
     def setupFinalUi(self):
