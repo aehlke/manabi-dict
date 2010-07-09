@@ -1,8 +1,10 @@
 
-from PyQt4 import QtGui, QtCore, QtWebKit
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+from PyQt4.Qt import Qt
+from PyQt4 import QtWebKit
 #from QtCore.QObject import connect, disconnect
 #from PyQt4.QObject import connect, disconnect
-from PyQt4.Qt import Qt
 from msmoothscroller import MSmoothScroller
 
 class MWebView(QtWebKit.QWebView):
@@ -17,6 +19,17 @@ class MWebView(QtWebKit.QWebView):
         self._sb = None #scroll bar
 
         #self._smooth_scroller = MSmoothScroller()
+
+    gotFocus = pyqtSignal()
+    lostFocus = pyqtSignal()
+
+    def focusInEvent(self, event):
+        print 'browser got focus'
+        self.gotFocus.emit()
+
+    def focusOutEvent(self, event):
+        print 'browser lost focus'
+        self.lostFocus.emit()
 
     def scrollToAnchor(self, anchor_name):
         anchor = self.page().mainFrame().findFirstElement("[name='{0}']".format(anchor_name))
@@ -64,7 +77,7 @@ class MWebView(QtWebKit.QWebView):
         self._scrollToY(y)
 
     def _scrollActionTriggered(self, action):
-        if action is not QtGui.QAbstractSlider.SliderMove:
+        if action is not QAbstractSlider.SliderMove:
             value = self._sb.sliderPosition()
             self._scrollToY(value)
 

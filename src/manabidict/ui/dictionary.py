@@ -68,6 +68,7 @@ class Dictionary(QMainWindow):
         self.setupUi()
         self.setupMacUi()
         self.setupJavaScriptBridge()
+        self.setupActions()
         self.restoreUiState()
         self.setupFinalUi()
         self._finishedUiSetup = True
@@ -172,6 +173,30 @@ class Dictionary(QMainWindow):
         self.javascript_bridge = JavaScriptBridge(self)
         self._setupJavaScriptBridge()
         self.ui.entryView.page().mainFrame().javaScriptWindowObjectCleared.connect(self._setupJavaScriptBridge)
+
+    def setupActions(self):
+        '''Connect text edit and webkit signals to menu action slots, particularly for enable/disable.
+        '''
+        sf = self.ui.searchField.search_field
+        ev = self.ui.entryView
+
+        # edit menu for search field text selection
+        #for action in [self.ui.actionCut, self.ui.actionCopy, self.ui.actionDelete]:
+            #sf.selectionChanged.connect(lambda: action.setEnabled(sf.hasSelectedText()))
+
+        # set enabled based on focus events
+        for action in [self.ui.actionUndo, self.ui.actionRedo, self.ui.actionCut, self.ui.actionCopy,
+                       self.ui.actionPaste, self.ui.actionDelete, self.ui.actionSelectAll]:
+            sf.lostFocus.connect(partial(action.setEnabled, False))
+            sf.gotFocus.connect(partial(action.setEnabled, True))
+
+        # Select All for entryView
+        ev.lostFocus.connect(partial(self.ui.actionSelectAll.setEnabled, False))
+        ev.gotFocus.connect(partial(self.ui.actionSelectAll.setEnabled, True))
+
+        # enable Copy for webkit text selection
+        ev.page().selectionChanged.connect(lambda: self.ui.actionCopy.setEnabled(bool(self.ui.entryView.selectedText())))
+
 
     def setupFinalUi(self):
         '''The last UI setup method to be called.
@@ -316,6 +341,43 @@ class Dictionary(QMainWindow):
         #prefs.show()
         prefs.exec_()
         self.reload_books_list()
+
+
+    @pyqtSignature('')
+    def on_actionUndo_triggered(self):
+        self.ui.searchField.search_field.undo()
+
+    @pyqtSignature('')
+    def on_actionRedo_triggered(self):
+        self.ui.searchField.search_field.redo()
+
+    @pyqtSignature('')
+    def on_actionCut_triggered(self):
+        self.ui.searchField.search_field.cut()
+
+    @pyqtSignature('')
+    def on_actionCopy_triggered(self):
+        if self.ui.searchField.search_field.hasFocus():
+            self.ui.searchField.search_field.copy()
+        elif self.ui.entryView.hasFocus():
+            self.ui.entryView.page().triggerAction(QWebPage.Copy)
+
+    @pyqtSignature('')
+    def on_actionPaste_triggered(self):
+        self.ui.searchField.search_field.paste()
+
+    @pyqtSignature('')
+    def on_actionDelete_triggered(self):
+        self.ui.searchField.search_field.removeSelectedText()
+
+    @pyqtSignature('')
+    def on_actionSelectAll_triggered(self):
+        if self.ui.searchField.search_field.hasFocus():
+            self.ui.searchField.search_field.selectAll()
+        elif self.ui.entryView.hasFocus():
+            self.ui.entryView.page().triggerAction(QWebPage.SelectAll)
+
+
 
 
     # general methods

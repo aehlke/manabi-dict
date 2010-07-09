@@ -10,6 +10,16 @@ class MLineEdit(QLineEdit):
     keyUpPressed = pyqtSignal()
     keyDownPressed = pyqtSignal()
     keyEscapePressed = pyqtSignal()
+    gotFocus = pyqtSignal()
+    lostFocus = pyqtSignal()
+
+    def focusInEvent(self, event):
+        print 'edit got focus'
+        self.gotFocus.emit()
+
+    def focusOutEvent(self, event):
+        print 'edit lost focus'
+        self.lostFocus.emit()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Up:

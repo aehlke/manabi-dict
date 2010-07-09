@@ -37,14 +37,16 @@ sort results by heading word length
 
 show word commonality
 
+search method detection
+
 
 BUGS:
 the sample test ej,je dict shows twice as many entries as it should (misdetermining entry endpoint)
 resize book select on switch
 mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
-
-search method detection isnt implemented, so one of the kojien dicts breaks (also what to do about dicts with no search methods?)
+book selection combobox changes height sometimes
 
 epywing bugs:
-need to change < and > to entities if theyre part of the text
 'dame' in hiragana is broke in supa readers (see: kotonoko)
+kojien 6 entries have link color text for the words only in the header
+アーヘン【Aachen】in kojien doesn't linkify the 提供 text
