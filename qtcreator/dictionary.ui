@@ -409,6 +409,12 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <widget class="QMenu" name="menuFind">
+     <property name="title">
+      <string>Find</string>
+     </property>
+     <addaction name="actionSearchForANewWord"/>
+    </widget>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
     <addaction name="separator"/>
@@ -418,10 +424,24 @@
     <addaction name="actionDelete"/>
     <addaction name="actionSelectAll"/>
     <addaction name="separator"/>
-    <addaction name="actionFind"/>
+    <addaction name="menuFind"/>
+   </widget>
+   <widget class="QMenu" name="menuSearch">
+    <property name="title">
+     <string>Search</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuGo">
+    <property name="title">
+     <string>Go</string>
+    </property>
+    <addaction name="actionBack2"/>
+    <addaction name="actionForward2"/>
    </widget>
    <addaction name="menuApplication"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuGo"/>
+   <addaction name="menuSearch"/>
   </widget>
   <widget class="QToolBar" name="navToolbar">
    <property name="enabled">
@@ -568,17 +588,36 @@
     <string>Delete</string>
    </property>
   </action>
-  <action name="actionFind">
-   <property name="text">
-    <string>Find</string>
-   </property>
-  </action>
   <action name="actionSelectAll">
    <property name="text">
     <string>Select All</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
+   </property>
+  </action>
+  <action name="actionSearchForANewWord">
+   <property name="text">
+    <string>Search For a New Word...</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Shift+F</string>
+   </property>
+  </action>
+  <action name="actionBack2">
+   <property name="text">
+    <string>Back</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+[</string>
+   </property>
+  </action>
+  <action name="actionForward2">
+   <property name="text">
+    <string>Forward</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+]</string>
    </property>
   </action>
  </widget>

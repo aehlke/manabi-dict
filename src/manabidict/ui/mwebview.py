@@ -24,11 +24,9 @@ class MWebView(QtWebKit.QWebView):
     lostFocus = pyqtSignal()
 
     def focusInEvent(self, event):
-        print 'browser got focus'
         self.gotFocus.emit()
 
     def focusOutEvent(self, event):
-        print 'browser lost focus'
         self.lostFocus.emit()
 
     def scrollToAnchor(self, anchor_name):

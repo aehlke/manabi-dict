@@ -96,6 +96,7 @@ class Dictionary(QMainWindow):
         #ui.entryView.setSmoothScrolling(True)
 
         self.reload_books_list()
+        self.reload_search_menu()
         self.reload_search_methods_list()
 
 
@@ -341,8 +342,10 @@ class Dictionary(QMainWindow):
         #prefs.show()
         prefs.exec_()
         self.reload_books_list()
+        self.reload_search_menu()
 
-
+    # Edit Menu
+    
     @pyqtSignature('')
     def on_actionUndo_triggered(self):
         self.ui.searchField.search_field.undo()
@@ -376,6 +379,13 @@ class Dictionary(QMainWindow):
             self.ui.searchField.search_field.selectAll()
         elif self.ui.entryView.hasFocus():
             self.ui.entryView.page().triggerAction(QWebPage.SelectAll)
+
+    @pyqtSignature('')
+    def on_actionSearchForANewWord_triggered(self):
+        '''Selects the search field, so the user can start searching for something new.
+        '''
+        self.ui.searchField.search_field.setFocus()
+        self.ui.searchField.search_field.selectAll()
 
 
 
@@ -526,31 +536,116 @@ class Dictionary(QMainWindow):
             return self.book_manager.books[unicode(selected_data)]
         else:
             return selected_data.toPyObject()
+
+    def select_next_book(self):
+        sb = self.ui.selectBook
+        index = sb.currentIndex()
+
+        if index < sb.count() - 1:
+            if sb.itemText(index + 1):
+                sb.setCurrentIndex(index + 1)
+            else:
+                # would have been a eparator item
+                sb.setCurrentIndex(index + 2)
+        else:
+            sb.setCurrentIndex(0)
+
+    def select_previous_book(self):
+        sb = self.ui.selectBook
+        index = sb.currentIndex()
+
+        if index > 0:
+            if sb.itemText(index - 1):
+                sb.setCurrentIndex(index - 1)
+            else:
+                # would have been a eparator item
+                sb.setCurrentIndex(index - 2)
+        else:
+            sb.setCurrentIndex(sb.count() - 1)
     
-    def select_book(self, book=None, all_books=False):
+    def select_book(self, book=None, all_books=False, category=None):
         '''Selects the book given an EpwingBook instance, or everything if `all_books` is True.
+        Will select a category instead if `category` is not None.
         '''
         sb = self.ui.selectBook
         if all_books:
-            sb.setCurrentIndex(0)
+            index = 0
+        elif category:
+            index = sb.findText(category.label)
         else:
             index = sb.findData(book.id)
-            if index != -1:
-                sb.setCurrentIndex(index)
+        if index != -1:
+            sb.setCurrentIndex(index)
+
+    def reload_search_menu(self):
+        '''Same as `reload_books_list` except for the menu bar Search item.
+        '''
+        sm = self.ui.menuSearch
+
+        sm.clear()
+
+        number = 0
+        def get_shortcut(number):
+            if number <= 9:
+                return [QKeySequence(Qt.CTRL + getattr(Qt, 'Key_' + str(number)))]
+
+        # add 'All' options
+        action_all = sm.addAction('All Dictionaries')
+        action_all.triggered.connect(partial(self.select_book, all_books=True))
+        shortcut = get_shortcut(number)
+        if shortcut:
+            action_all.setShortcuts(shortcut)
+            number += 1
+        sm.addSeparator()
+
+
+        # add categories
+        for category in self.book_manager.categories:
+            action = sm.addAction(category.label)
+            action.triggered.connect(partial(self.select_book, category=category))
+            shortcut = get_shortcut(number)
+            if shortcut:
+                action.setShortcuts(shortcut)
+                number += 1
+        sm.addSeparator()
+
+        # add books
+        for book in self.book_manager.books.values():
+            action = sm.addAction(book.name)
+            action.triggered.connect(partial(self.select_book, book=book))
+            shortcut = get_shortcut(number)
+            if shortcut:
+                action.setShortcuts(shortcut)
+                number += 1
+        sm.addSeparator()
+
+        # prev / next
+        action = sm.addAction('Select Next Dictionary')
+        action.triggered.connect(self.select_next_book)
+        action.setShortcuts([QKeySequence(Qt.CTRL + Qt.Key_BraceRight)])
+        action = sm.addAction('Select Previous Dictionary')
+        action.triggered.connect(self.select_previous_book)
+        action.setShortcuts([QKeySequence(Qt.CTRL + Qt.Key_BraceLeft)])
+
+
 
     def reload_books_list(self):
         '''Fills the book combobox with available books.
         Call this after updating installed book preferences, and on first launch.
 
         Also adds the categories of available books, for searching across multiple books.
+
+        This will duplicate the entries into the menu bar as well, under the Search item.
         '''
         sb = self.ui.selectBook
+
         selected_data = sb.itemData(sb.currentIndex())
         if selected_data.type() == QVariant.String:
             selected_data = selected_data.toString()
         else:
             selected_data = selected_data.toPyObject()
         #current_book_id = unicode(sb.itemData(sb.currentIndex()).toString())# if sb.currentIndex() else None
+
         sb.clear()
 
         # add 'all' option
@@ -616,12 +711,15 @@ class Dictionary(QMainWindow):
 
         if selected_book is None:
             # search all
-            results = self.book_manager.search_all(query, search_method=search_method, max_results_per_book=max_results_per_book)
+            results = self.book_manager.search_all(
+                    query, search_method=search_method, max_results_per_book=max_results_per_book)
         elif inspect.isclass(selected_book) and issubclass(selected_book, BookCategory):
             # category search
-            results = self.book_manager.search_category(selected_book, query, search_method=search_method, max_results_per_book=max_results_per_book)
+            results = self.book_manager.search_category(
+                    selected_book, query, search_method=search_method, max_results_per_book=max_results_per_book)
         else:
-            results = list(islice(selected_book.search(query, search_method=search_method), 0, max_results_per_book))
+            results = list(islice(selected_book.search(
+                    query, search_method=search_method), 0, max_results_per_book))
 
         #results = self.book_manager.search_all(query, search_method='prefix')#, container=container)
         self.show_results(results)

@@ -14,11 +14,9 @@ class MLineEdit(QLineEdit):
     lostFocus = pyqtSignal()
 
     def focusInEvent(self, event):
-        print 'edit got focus'
         self.gotFocus.emit()
 
     def focusOutEvent(self, event):
-        print 'edit lost focus'
         self.lostFocus.emit()
 
     def keyPressEvent(self, event):

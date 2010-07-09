@@ -26,9 +26,14 @@ drag-n-drop for folders into the Preferences table to install a dictionary
 
 combine ~suffix entries back into main entry somehow (probably per dictionary, after detecting which dict it is)
 
-sanseido super daijirin sometimes returns multiple references to the same entry in search results, thereby messing up category search
+-sanseido super daijirin sometimes returns multiple references to the same entry in search results, thereby messing up category search
 
-ISO mounting somehow
+.iso mounting somehow
+
+File->New Window support
+
+File->Print
+
 
 IDEAS:
 allow multi select on the results list, to show multiple entries?
@@ -45,6 +50,7 @@ the sample test ej,je dict shows twice as many entries as it should (misdetermin
 resize book select on switch
 mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
 book selection combobox changes height sometimes
+webkit selection bg color is wrong
 
 epywing bugs:
 'dame' in hiragana is broke in supa readers (see: kotonoko)
