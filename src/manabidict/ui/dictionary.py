@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -649,8 +650,14 @@ class Dictionary(QMainWindow):
                 <body>''', body_html, u'</body></html>'])
         self.ui.entryView.setHtml(html)
 
+    def _show_loading_message(self):
+        self._set_entryView_body(u'Loading…')
+        q_app = QApplication.instance()
+        q_app.processEvents()
+
     def show_entry(self, entry):
         self._current_entry = entry
+        self._show_loading_message()
         self._set_entryView_body(entry.text)
 
     def show_entries(self, entries):
@@ -658,6 +665,7 @@ class Dictionary(QMainWindow):
         They will be separated by a divider that can be clicked to hide its entry.
         '''
         self._current_entry = entries
+        self._show_loading_message()
         html = [] #u''
         divider = u'''
             <table width="98%" class="dict-divider" onclick="toggle_entry('entry-{0}', 'arrow-down-{0}', 'arrow-up-{0}');">
@@ -679,7 +687,7 @@ class Dictionary(QMainWindow):
             html.append(divider.format(entry_counter, entry.parent.name))
 
             # add the entry's text
-            html.append(u'<div class="dict-entry" id="entry-{0}">{1}</div>'.format(entry_counter, entry.text))
+            html.extend([u'<div class="dict-entry" id="entry-{0}">'.format(entry_counter), entry.text, u'</div>'])
 
             entry_counter += 1
         html = u''.join(html)
