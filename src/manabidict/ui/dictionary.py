@@ -43,6 +43,35 @@ class JavaScriptBridge(QObject):
         self.dictionary_window.do_search(query)
 
 
+
+class KeyPressFilter(QObject):
+    '''Filters input so that when the search field isn't focused and 
+    the user enters text, it will focus the field before inserting the text.
+    Then the user can always just start typing when they want to start a new search.
+    '''
+    #TODO use QInputMethodEvent to handle japanese key input
+
+    def __init__(self, parent=None):
+        super(KeyPressFilter, self).__init__(parent)
+        self.parent = parent
+
+    def eventFilter(self, obj, event):
+        '''Move focus to searchField if text is being entered.
+        '''
+        if event.type() == QEvent.KeyPress:
+            key_event = QKeyEvent(event)
+            search_field = self.parent.ui.searchField.search_field
+
+            if obj is not search_field and key_event.text():
+                search_field.setFocus()
+                search_field.keyPressEvent(event)
+                return True
+            return False
+        else:
+            return QObject.eventFilter(self, obj, event)
+            
+
+
 class Dictionary(QMainWindow):
 
     ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
@@ -69,6 +98,7 @@ class Dictionary(QMainWindow):
         self.setupMacUi()
         self.setupJavaScriptBridge()
         self.setupActions()
+        self.setupKeyboardEventFilter()
         self.restoreUiState()
         self.setupFinalUi()
         self._finishedUiSetup = True
@@ -208,6 +238,14 @@ class Dictionary(QMainWindow):
         ev.page().selectionChanged.connect(lambda: self.ui.actionCopy.setEnabled(bool(self.ui.entryView.selectedText())))
 
 
+    # event filter for keyboard events
+    # --------
+    def setupKeyboardEventFilter(self):
+        self.key_press_filter = KeyPressFilter(self)
+        #q_app = QApplication.instance()
+        self.installEventFilter(self.key_press_filter)
+
+    
     def setupFinalUi(self):
         '''The last UI setup method to be called.
         '''
@@ -395,6 +433,7 @@ class Dictionary(QMainWindow):
         '''
         self.ui.searchField.search_field.setFocus()
         self.ui.searchField.search_field.selectAll()
+
 
 
 
