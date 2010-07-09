@@ -186,10 +186,17 @@ class Dictionary(QMainWindow):
             #sf.selectionChanged.connect(lambda: action.setEnabled(sf.hasSelectedText()))
 
         # set enabled based on focus events
-        for action in [self.ui.actionUndo, self.ui.actionRedo, self.ui.actionCut, self.ui.actionCopy,
-                       self.ui.actionPaste, self.ui.actionDelete, self.ui.actionSelectAll]:
+        for action in [self.ui.actionUndo, self.ui.actionRedo, self.ui.actionPaste, self.ui.actionSelectAll]:
             sf.lostFocus.connect(partial(action.setEnabled, False))
             sf.gotFocus.connect(partial(action.setEnabled, True))
+
+        def enable_search_field_action(action):
+            action.setEnabled(bool(self.ui.searchField.search_field.selectedText()))
+
+        for action in [self.ui.actionCut, self.ui.actionCopy, self.ui.actionDelete]:
+            sf.selectionChanged.connect(partial(enable_search_field_action, action))
+            sf.lostFocus.connect(partial(action.setEnabled, False))
+            sf.gotFocus.connect(partial(enable_search_field_action, action))
 
         # Select All for entryView
         ev.lostFocus.connect(partial(self.ui.actionSelectAll.setEnabled, False))
