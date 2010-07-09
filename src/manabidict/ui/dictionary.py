@@ -187,6 +187,7 @@ class Dictionary(QMainWindow):
 
         # set enabled based on focus events
         for action in [self.ui.actionUndo, self.ui.actionRedo, self.ui.actionPaste, self.ui.actionSelectAll]:
+            action.setEnabled(False)
             sf.lostFocus.connect(partial(action.setEnabled, False))
             sf.gotFocus.connect(partial(action.setEnabled, True))
 
@@ -194,6 +195,7 @@ class Dictionary(QMainWindow):
             action.setEnabled(bool(self.ui.searchField.search_field.selectedText()))
 
         for action in [self.ui.actionCut, self.ui.actionCopy, self.ui.actionDelete]:
+            action.setEnabled(False)
             sf.selectionChanged.connect(partial(enable_search_field_action, action))
             sf.lostFocus.connect(partial(action.setEnabled, False))
             sf.gotFocus.connect(partial(enable_search_field_action, action))
