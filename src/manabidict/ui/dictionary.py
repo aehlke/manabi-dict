@@ -73,8 +73,15 @@ class KeyPressFilter(QObject):
                     return True
             elif event.type() == QEvent.InputMethod:
                 input_method_event = QInputMethodEvent(event)
-                print str(dir(input_method_event))
-                #if obj is not search_field
+                #print unicode(input_method_event.preeditString())
+                #print unicode(input_method_event.attributes())
+
+                if obj is not search_field:
+                    #search_field.setFocus()
+                    search_field.inputMethodEvent(input_method_event)
+                    return True
+        #if event.type() not in [QEvent.Paint, QEvent.Timer, QEvent.HoverEnter, QEvent.HoverLeave, QEvent.HoverMove, QEvent.Resize, QEvent.ChildAdded]:
+            #print event
         return QObject.eventFilter(self, obj, event)
             
 

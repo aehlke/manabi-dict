@@ -25,9 +25,13 @@ class MWebView(QtWebKit.QWebView):
 
     def focusInEvent(self, event):
         self.gotFocus.emit()
+        QtWebKit.QWebView.focusInEvent(self, event)
+        event.accept()
 
     def focusOutEvent(self, event):
         self.lostFocus.emit()
+        QtWebKit.QWebView.focusOutEvent(self, event)
+        event.accept()
 
     def scrollToAnchor(self, anchor_name):
         anchor = self.page().mainFrame().findFirstElement("[name='{0}']".format(anchor_name))

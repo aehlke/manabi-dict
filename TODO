@@ -55,6 +55,7 @@ resize book select on switch
 mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
 book selection combobox changes height sometimes
 webkit selection bg color is wrong
+the search field clear button is showing after a delay
 
 epywing bugs:
 'dame' in hiragana is broke in supa readers (see: kotonoko)

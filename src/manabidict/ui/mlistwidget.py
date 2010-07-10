@@ -22,10 +22,12 @@ class MListWidget(QListWidget):
     def focusInEvent(self, event):
         self.gainedFocus.emit()
         event.accept()
+        QListWidget.focusInEvent(self, event)
     
     def focusOutEvent(self, event):
         self.lostFocus.emit()
         event.accept()
+        QListWidget.focusOutEvent(self, event)
 
     def _htmlItemWidgetLoadedSignal(self, ok):
         self._htmlItemWidgetFinishedLoading = True

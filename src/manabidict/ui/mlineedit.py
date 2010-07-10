@@ -16,10 +16,12 @@ class MLineEdit(QLineEdit):
     def focusInEvent(self, event):
         QLineEdit.focusInEvent(self, event)
         self.gotFocus.emit()
+        event.accept()
 
     def focusOutEvent(self, event):
         QLineEdit.focusOutEvent(self, event)
         self.lostFocus.emit()
+        event.accept()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Up:
