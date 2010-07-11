@@ -43,6 +43,10 @@ class JavaScriptBridge(QObject):
         self.dictionary_window.do_search(query)
 
 
+ASCII_TAB  = 9
+ASCII_CR   = 13
+ASCII_UP   = 30
+ASCII_DOWN = 31
 
 class KeyPressFilter(QObject):
     '''Filters input so that when the search field isn't focused and 
@@ -51,6 +55,9 @@ class KeyPressFilter(QObject):
     '''
     #TODO use QInputMethodEvent to handle japanese key input (must be installed on the app level)
     #FIXME this breaks for typing in the prefs
+
+    # non-printing characters
+    control_chars = u''.join(map(unichr, range(0,32) + range(127,160)))
 
     def __init__(self, parent=None):
         '''`parent` must be a window object.
@@ -67,10 +74,22 @@ class KeyPressFilter(QObject):
             if event.type() == QEvent.KeyPress:
                 key_event = QKeyEvent(event)
 
-                if obj is not search_field and key_event.text():
+                if obj is not search_field \
+                        and key_event.text() \
+                        and key_event.text() not in self.control_chars:
+                        #and ord(unicode(key_event.text())) not in [ASCII_CR, ASCII_UP, ASCII_DOWN, ASCII_TAB]:
+                    #print obj
+                    #print key_event
+                    #print ord(unicode(key_event.text()))
                     search_field.setFocus()
+                    #search_field.clear()
                     search_field.keyPressEvent(event)
                     return True
+                elif key_event.key() in [Qt.Key_PageUp, Qt.Key_PageDown, Qt.Key_Home, Qt.Key_End]:
+                    # scroll the entryView
+                    return self.parent.ui.entryView.event(event)
+                #else:
+                    #print str(QApplication.instance().focusWidget())
             elif event.type() == QEvent.InputMethod:
                 input_method_event = QInputMethodEvent(event)
                 #print unicode(input_method_event.preeditString())
@@ -78,10 +97,12 @@ class KeyPressFilter(QObject):
 
                 if obj is not search_field:
                     #search_field.setFocus()
+                    #search_field.clear()
                     search_field.inputMethodEvent(input_method_event)
                     return True
         #if event.type() not in [QEvent.Paint, QEvent.Timer, QEvent.HoverEnter, QEvent.HoverLeave, QEvent.HoverMove, QEvent.Resize, QEvent.ChildAdded]:
             #print event
+        #print parent.ui.searchField.search_field.inputMethodQuery(None)
         return QObject.eventFilter(self, obj, event)
             
 
@@ -112,6 +133,7 @@ class Dictionary(QMainWindow):
         self.setupMacUi()
         self.setupJavaScriptBridge()
         self.setupActions()
+        self.setupTabOrder()
         self.setupKeyboardEventFilter()
         self.restoreUiState()
         self.setupFinalUi()
@@ -127,6 +149,14 @@ class Dictionary(QMainWindow):
         ui.setupUi(self)
 
         ui.searchResults.setFocusPolicy(Qt.StrongFocus)
+        #ui.searchResults.setAttribute(Qt.WA_InputMethodEnabled, True)
+        #ui.searchResults.ret
+
+        # QListWidget is broken and won't accept Japanese input,
+        # so we have to focus the search field after every interaction with the list,
+        # until we have a more elegant solution (i.e. a proxy hidden text field)
+        #for signal in ['itemClicked', 'currentRowChanged']:
+            #getattr(ui.searchResults, signal).connect(lambda e: self.ui.searchField.search_field.setFocus())
 
         # Entry view
         ui.entryView.setScrollBar(ui.entryVerticalScrollBar, scroll_bar_container=ui.entryVerticalScrollBarContainer)
@@ -149,9 +179,7 @@ class Dictionary(QMainWindow):
         ui.searchResults.setAttribute(Qt.WA_MacShowFocusRect, False)
         #ui.searchResults.setStyleSheet('QListWidget { selection-background-color: #DDDDDD; selection-color: black; }')
         
-        #spacer = QtGui.QSpacer(10, 0, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         spacer = MSpacer()
-        #spacer.setOrientation(Qt.Horizontal)
         ui.selectBook.setContentsMargins(0, 0, 0, 0) #l, t, r, b
         ui.selectBook.setMinimumHeight(26)
         ui.dictionaryToolbar.insertWidget(None, spacer)
@@ -177,8 +205,10 @@ class Dictionary(QMainWindow):
         # history buttons
         self.ui.history_buttons = MSegmentedButton(parent=self)
         url_base = ':/images/icons/toolbar/button-'
-        ui.history_buttons.left_button.setImageUrls(url_base + 'left.png', url_base + 'left-pressed.png', url_base + 'left-disabled.png')
-        ui.history_buttons.right_button.setImageUrls(url_base + 'right.png', url_base + 'right-pressed.png', url_base + 'right-disabled.png')
+        ui.history_buttons.left_button.setImageUrls(url_base + 'left.png', 
+                                                    url_base + 'left-pressed.png', url_base + 'left-disabled.png')
+        ui.history_buttons.right_button.setImageUrls(url_base + 'right.png',
+                                                    url_base + 'right-pressed.png', url_base + 'right-disabled.png')
         ui.history_buttons.left_button.clicked.connect(lambda: ui.actionBack.trigger())
         ui.history_buttons.right_button.clicked.connect(lambda: ui.actionForward.trigger())
         ui.navToolbar.addWidget(ui.history_buttons)
@@ -202,9 +232,14 @@ class Dictionary(QMainWindow):
             action.setVisible(False)
 
         ui.text_size_buttons = MSegmentedButton(parent=self)
+        self.ui.text_size_buttons.setFocusPolicy(Qt.NoFocus)
         url_base = ':/images/icons/toolbar/text-'
-        ui.text_size_buttons.left_button.setImageUrls(url_base + 'smaller.png', url_base + 'smaller-pressed.png', url_base + 'smaller-disabled.png')
-        ui.text_size_buttons.right_button.setImageUrls(url_base + 'bigger.png', url_base + 'bigger-pressed.png', url_base + 'bigger-disabled.png')
+        ui.text_size_buttons.left_button.setImageUrls(url_base + 'smaller.png', 
+                                                      url_base + 'smaller-pressed.png', 
+                                                      url_base + 'smaller-disabled.png')
+        ui.text_size_buttons.right_button.setImageUrls(url_base + 'bigger.png', 
+                                                       url_base + 'bigger-pressed.png', 
+                                                       url_base + 'bigger-disabled.png')
         ui.text_size_buttons.left_button.clicked.connect(lambda: ui.actionDecreaseFontSize.trigger())
         ui.text_size_buttons.right_button.clicked.connect(lambda: ui.actionIncreaseFontSize.trigger())
         ui.navToolbar.addWidget(ui.text_size_buttons)
@@ -249,7 +284,16 @@ class Dictionary(QMainWindow):
         ev.gotFocus.connect(partial(self.ui.actionSelectAll.setEnabled, True))
 
         # enable Copy for webkit text selection
-        ev.page().selectionChanged.connect(lambda: self.ui.actionCopy.setEnabled(bool(self.ui.entryView.selectedText())))
+        ev.page().selectionChanged.connect(
+                lambda: self.ui.actionCopy.setEnabled(bool(self.ui.entryView.selectedText())))
+
+    def setupTabOrder(self):
+        ui = self.ui
+        widgets = [ui.selectBook, ui.searchMethod, ui.searchField.search_field,
+                   ui.searchResults, ui.entryView, ui.selectBook]
+
+        for i in xrange(1, len(widgets)):
+            QWidget.setTabOrder(widgets[i - 1], widgets[i])
 
 
     # event filter for keyboard events
@@ -259,20 +303,18 @@ class Dictionary(QMainWindow):
         q_app = QApplication.instance()
         q_app.installEventFilter(self.key_press_filter)
 
+    def restoreUiState(self):
+        '''Restores UI state from the last time it was opened.
+        '''
+        index = int(self.settings.value('ui_state/selected_book_index').toPyObject())
+        if index != -1:
+            self.ui.selectBook.setCurrentIndex(index)
     
     def setupFinalUi(self):
         '''The last UI setup method to be called.
         '''
         self.refresh_history_buttons()
 
-
-    def restoreUiState(self):
-        '''Restores UI state from the last time it was opened.
-        '''
-        index = int(self.settings.value('ui_state/selected_book_index').toPyObject())
-        #index = self.ui.selectBook.findData(book_id)
-        if index != -1:
-            self.ui.selectBook.setCurrentIndex(index)
 
 
     # Search field UI
@@ -286,7 +328,8 @@ class Dictionary(QMainWindow):
 
         if sr.currentItem():
             #TODO see todo file for notes on this: #sf.setText(sr.currentItem().text())
-            self.ui.entryView.setFocus()
+            #self.ui.entryView.setFocus()
+            sr.setFocus()
             #sf.selectAll()
             self.stage_history()
 
@@ -326,7 +369,12 @@ class Dictionary(QMainWindow):
             else:
                 self.show_entry(item_data)
 
-    #def on_searchResults_
+
+    def on_searchResults_itemActivated(self, item):
+        self.ui.entryView.setFocus()
+    
+    def on_searchResults_returnPressed(self):
+        self.ui.entryView.setFocus()
 
     def on_searchResults_lostFocus(self):
         pass

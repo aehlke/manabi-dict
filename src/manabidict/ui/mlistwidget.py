@@ -19,15 +19,38 @@ class MListWidget(QListWidget):
 
         self._prepHtmlItemWidget()
 
-    def focusInEvent(self, event):
-        self.gainedFocus.emit()
-        event.accept()
-        QListWidget.focusInEvent(self, event)
+    #def focusInEvent(self, event):
+        #self.gainedFocus.emit()
+        #event.accept()
+        #QListWidget.focusInEvent(self, event)
     
-    def focusOutEvent(self, event):
-        self.lostFocus.emit()
-        event.accept()
-        QListWidget.focusOutEvent(self, event)
+    #def focusOutEvent(self, event):
+        #self.lostFocus.emit()
+        #event.accept()
+        #QListWidget.focusOutEvent(self, event)
+
+    #def event(self, event):
+        #if event.type() == QEvent.InputMethod:
+            #print 'ionout pmethod'
+            #self.inputMethodEvent(event)
+        #elif event.type() == QEvent.KeyPress:
+            #print 'key pressed'
+        #return QListWidget.event(self, event)
+
+    #@pyqtSignature('QInputMethodEvent')
+    #def inputMethodEvent(self, event):
+        #print 'custom input event!'
+        #print event
+
+    def event(self, event):
+        '''Intercept enter/return presses.
+        '''
+        if event.type() == QEvent.KeyPress:
+            key_press = QKeyEvent(event)
+            if key_press.key() in [Qt.Key_Enter, Qt.Key_Return]:
+                self.returnPressed.emit()
+                return True
+        return QListWidget.event(self, event)
 
     def _htmlItemWidgetLoadedSignal(self, ok):
         self._htmlItemWidgetFinishedLoading = True

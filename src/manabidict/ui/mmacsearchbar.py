@@ -26,6 +26,7 @@ class MMacSearchBar(QWidget):
         cb.setEnabled(False)
 
         sf = self.search_field = MLineEdit()
+        sf.setFocusPolicy(Qt.StrongFocus)
         sf.setObjectName('search_field')
         sf.setFrame(False)
         sf.setMaximumHeight(16)

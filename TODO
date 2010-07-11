@@ -13,6 +13,8 @@ inactive-styled segmented buttons
 
 custom horizontal scrollbar for webview so that it doesn't overlap the corner
 
+prefetch entry text after a search
+
 TODO LATER:
 on-hover of links, show the entry's title or something
 
@@ -56,6 +58,8 @@ mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in resu
 book selection combobox changes height sometimes
 webkit selection bg color is wrong
 the search field clear button is showing after a delay
+pressing 'Enter' in the search field with Japanese input method on doesn't work as expected
+can't tab focus selectBook
 
 epywing bugs:
 'dame' in hiragana is broke in supa readers (see: kotonoko)

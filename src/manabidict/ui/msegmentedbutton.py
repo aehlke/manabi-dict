@@ -28,6 +28,9 @@ class MSegmentedButton(QWidget):
         self.left_button = MInnerToolButton()
         self.right_button = MInnerToolButton()
 
+        self.left_button.setFocusPolicy(Qt.NoFocus)
+        self.right_button.setFocusPolicy(Qt.NoFocus)
+
         self.left_button.setFixedSize(27, 23)
         self.right_button.setFixedSize(26, 23)
 

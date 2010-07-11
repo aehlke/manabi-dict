@@ -23,6 +23,20 @@ class MWebView(QtWebKit.QWebView):
     gotFocus = pyqtSignal()
     lostFocus = pyqtSignal()
 
+    def event(self, event):
+        '''Passes movement keys to the scrollbar.
+        '''
+        if self._sb:
+            if event.type() == QEvent.KeyPress:
+                key_event = QKeyEvent(event)
+
+                if key_event.key() in [Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp, Qt.Key_PageDown,
+                                       Qt.Key_Space, Qt.Key_Home, Qt.Key_End]:
+                    return self._sb.event(event)
+
+        return QtWebKit.QWebView.event(self, event)
+
+
     def focusInEvent(self, event):
         self.gotFocus.emit()
         QtWebKit.QWebView.focusInEvent(self, event)
