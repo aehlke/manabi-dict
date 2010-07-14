@@ -91,21 +91,6 @@ class MListWidget(QListWidget):
     def addHtmlItem(self, html, data):
         '''Adds a new QTextEdit widget containing the given HTMl as an item in the list.
         '''
-
-        html = u'<html><body style="margin:0px 0px 0px 4px">{0}</body></html>'.format(html)
-        self._htmlItemWidgetFinishedLoading = False
-        self._htmlItemWidget.setHtml(html)
-
-        pm = QImage(self._htmlItemWidget.size(), QImage.Format_ARGB32)
-        pm.fill(Qt.transparent)
-
-        # wait for it to finish loading, then render
-        q_app = QApplication.instance()
-        while not self._htmlItemWidgetFinishedLoading:
-            q_app.processEvents(QEventLoop.WaitForMoreEvents | QEventLoop.ExcludeUserInputEvents)
-        
-        self._htmlItemWidget.render(pm, flags=QWidget.DrawChildren)
-
         item = QListWidgetItem()
         item.setData(Qt.UserRole, data)
         self.addItem(item)
@@ -114,7 +99,25 @@ class MListWidget(QListWidget):
         label = QLabel()
         label.setTextInteractionFlags(Qt.NoTextInteraction)
 
-        label.setPixmap(QPixmap.fromImage(pm))
+        html = u'<html><body style="margin:0px 0px 0px 4px">{0}</body></html>'.format(html)
+
+        if '<img' in html:
+            self._htmlItemWidgetFinishedLoading = False
+            self._htmlItemWidget.setHtml(html)
+
+            pm = QImage(self._htmlItemWidget.size(), QImage.Format_ARGB32)
+            pm.fill(Qt.transparent)
+
+            # wait for it to finish loading, then render
+            q_app = QApplication.instance()
+            while not self._htmlItemWidgetFinishedLoading:
+                q_app.processEvents(QEventLoop.WaitForMoreEvents | QEventLoop.ExcludeUserInputEvents)
+            
+            self._htmlItemWidget.render(pm, flags=QWidget.DrawChildren)
+
+            label.setPixmap(QPixmap.fromImage(pm))
+        else:
+            label.setText(html)
         
         self.setItemWidget(item, label)
 

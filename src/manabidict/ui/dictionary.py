@@ -17,11 +17,12 @@ from preferences import Preferences
 from mspacer import MSpacer
 from msegmentedbutton import MSegmentedButton
 
+from epwingprotocol import MNetworkAccessManager
 
 #from forms.dictionary import Ui_DictionaryWindow
 
 #from epywing.manager 
-from epywing.uris import route as route_dictionary_uri
+from epywing.uris import route as route_dictionary_uri, collection_uri_prefix
 from epywing.history import HistoryManager
 from epywing.util import strip_tags
 from epywing.categories import BookCategory
@@ -42,11 +43,6 @@ class JavaScriptBridge(QObject):
         self.dictionary_window.select_book(all_books=True)
         self.dictionary_window.do_search(query)
 
-
-ASCII_TAB  = 9
-ASCII_CR   = 13
-ASCII_UP   = 30
-ASCII_DOWN = 31
 
 class KeyPressFilter(QObject):
     '''Filters input so that when the search field isn't focused and 
@@ -77,10 +73,6 @@ class KeyPressFilter(QObject):
                 if obj is not search_field \
                         and key_event.text() \
                         and key_event.text() not in self.control_chars:
-                        #and ord(unicode(key_event.text())) not in [ASCII_CR, ASCII_UP, ASCII_DOWN, ASCII_TAB]:
-                    #print obj
-                    #print key_event
-                    #print ord(unicode(key_event.text()))
                     search_field.setFocus()
                     #search_field.clear()
                     search_field.keyPressEvent(event)
@@ -92,17 +84,12 @@ class KeyPressFilter(QObject):
                     #print str(QApplication.instance().focusWidget())
             elif event.type() == QEvent.InputMethod:
                 input_method_event = QInputMethodEvent(event)
-                #print unicode(input_method_event.preeditString())
-                #print unicode(input_method_event.attributes())
 
                 if obj is not search_field:
                     #search_field.setFocus()
                     #search_field.clear()
                     search_field.inputMethodEvent(input_method_event)
                     return True
-        #if event.type() not in [QEvent.Paint, QEvent.Timer, QEvent.HoverEnter, QEvent.HoverLeave, QEvent.HoverMove, QEvent.Resize, QEvent.ChildAdded]:
-            #print event
-        #print parent.ui.searchField.search_field.inputMethodQuery(None)
         return QObject.eventFilter(self, obj, event)
             
 
@@ -115,6 +102,7 @@ class Dictionary(QMainWindow):
     ZOOM_DELTA = 0.10
     ZOOM_RANGE = (0.4, 4.0,)
 
+    EPWING_URL_PROTOCOL = 'epwing://'
 
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
@@ -129,19 +117,19 @@ class Dictionary(QMainWindow):
         self._results_last_shown_at = 0
 
         self._finishedUiSetup = False
+
         self.setupUi()
         self.setupMacUi()
+        self.setupEpwingProtocol()
         self.setupJavaScriptBridge()
         self.setupActions()
         self.setupTabOrder()
         self.setupKeyboardEventFilter()
         self.restoreUiState()
         self.setupFinalUi()
+
         self._finishedUiSetup = True
 
-
-        #self.ui.searchField.setText('test')
-        #self.on_searchField_returnPressed()
 
 
     def setupUi(self):
@@ -243,6 +231,16 @@ class Dictionary(QMainWindow):
         ui.text_size_buttons.left_button.clicked.connect(lambda: ui.actionDecreaseFontSize.trigger())
         ui.text_size_buttons.right_button.clicked.connect(lambda: ui.actionIncreaseFontSize.trigger())
         ui.navToolbar.addWidget(ui.text_size_buttons)
+
+    def setupEpwingProtocol(self):
+        '''Sets up the epwing:// protocol handler for entryView.
+        '''
+        old_manager = self.ui.entryView.page().networkAccessManager()
+        self._new_network_manager = MNetworkAccessManager(old_manager, self.book_manager, parent=old_manager.parent())
+        #self._new_network_manager.finished.connect(self.testing)
+        self.ui.entryView.page().setNetworkAccessManager(self._new_network_manager)
+        #self.ui.entryView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
+        self.ui.entryView.page().setForwardUnsupportedContent(True)
 
     def _setupJavaScriptBridge(self):
         self.ui.entryView.page().mainFrame().addToJavaScriptWindowObject('manabi', self.javascript_bridge)
@@ -388,6 +386,7 @@ class Dictionary(QMainWindow):
     
     def on_entryView_linkClicked(self, url):
         url = unicode(url.toString())
+        print url
 
         self.stage_history()
         self.push_history()
@@ -887,36 +886,7 @@ class Dictionary(QMainWindow):
         '''
         html = u''.join([u'''
             <html>
-                <head><link rel="stylesheet" type="text/css" href="qrc:/css/entryview.css">
-                    <script type="text/javascript">
-                        function toggle_entry(entry_id, arrow_down_id, arrow_up_id) {
-                            var entry = document.getElementById(entry_id);
-                            var arrow_down = document.getElementById(arrow_down_id);
-                            var arrow_up = document.getElementById(arrow_up_id);
-
-                            if (entry.style.display == 'none') {
-                                entry.style.display = 'block';
-                                arrow_down.style.display = 'block';
-                                arrow_up.style.display = 'none';
-                            } else {
-                                entry.style.display = 'none';
-                                arrow_down.style.display = 'none';
-                                arrow_up.style.display = 'block';
-                            }
-                        }
-
-                        function get_text_of_children(node) {
-                            // returns the text of all children of `node`
-                            return 'textContent' in node ? node.textContent : node.innerText;
-                        }
-
-                        function search(node) {
-                            // performs a search for the given node's text, using whatever search method is selected
-                            var query = get_text_of_children(node);
-                            manabi.search(query);
-                        }
-                    </script>
-                </head>
+                <head><link rel="stylesheet" type="text/css" href="qrc:/css/entryview.css"></head>
                 <body>''', body_html, u'</body></html>'])
         self.ui.entryView.setHtml(html)
 
@@ -925,43 +895,41 @@ class Dictionary(QMainWindow):
         q_app = QApplication.instance()
         q_app.processEvents()
 
+    def _generate_url(self, is_collection, *entries):
+        '''`is_collection` denotes whether this URL will point to a collection of entries.
+        It only matters when a single entry is passed yet should still be rendered as a collection of entries,
+        since the dictionary title needs to be displayed in that case.
+        '''
+        entry_uris = [entry.uri for entry in entries]
+        url = '&'.join(entry_uris)
+
+        if is_collection:
+            url = collection_uri_prefix + url
+
+        url = self.EPWING_URL_PROTOCOL + url
+        return url
+
     def show_entry(self, entry):
         self._current_entry = entry
         self._show_loading_message()
-        self._set_entryView_body(entry.text)
+        #self._set_entryView_body(entry.text)
+        uri = self._generate_url(False, entry)
+        #self.load_uri('qrc:/css/entryview.css')
+        self.load_uri(uri)
 
     def show_entries(self, entries):
-        '''Display a list of entries, presumably from multiple dictionaries.
-        They will be separated by a divider that can be clicked to hide its entry.
-        '''
         self._current_entry = entries
         self._show_loading_message()
-        html = [] #u''
-        divider = u'''
-            <table width="98%" class="dict-divider" onclick="toggle_entry('entry-{0}', 'arrow-down-{0}', 'arrow-up-{0}');">
-                <tr>
-                    <td>
-                        <img src="qrc:/images/DisclosureDown.png" class="dict-divider-arrow" id="arrow-down-{0}" style="display:block">
-                        <img src="qrc:/images/DisclosureUp.png" class="dict-divider-arrow" id="arrow-up-{0}" style="display:none">
-                    </td>
-                    <td width="49%"><hr style="border-style:solid none none none; border-width:1px"></td>
-                    <td style="white-space:nowrap" class="dict-name">{1}</td>
-                    <td width="49%"><hr style="border-style:solid none none none; border-width:1px"></td>
-                </tr>
-            </table>
+        uri = self._generate_url(True, *entries)
+        self.load_uri(uri)
+
+
+    def load_uri(self, uri):
+        '''`uri` is a string.
         '''
-        entry_counter = 0
+        self.ui.entryView.load(QUrl(uri))
 
-        for entry in entries:
-            # add the divider with the entry's book title
-            html.append(divider.format(entry_counter, entry.parent.name))
 
-            # add the entry's text
-            html.extend([u'<div class="dict-entry" id="entry-{0}">'.format(entry_counter), entry.text, u'</div>'])
-
-            entry_counter += 1
-        html = u''.join(html)
-        self._set_entryView_body(html)
 
 
 

@@ -87,6 +87,11 @@ class MWebView(QtWebKit.QWebView):
         super(MWebView, self).resizeEvent(e)
         self._updateScrollBarMax()
 
+    def setHtml(self, text):
+        QtWebKit.QWebView.setHtml(self, text)
+        self._scrollToY(0)
+        self._sb.setValue(0)
+
     def _refreshScrollBar(self):
         self._updateScrollBarMax()
         y = self.page().mainFrame().scrollPosition().y()
