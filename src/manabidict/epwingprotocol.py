@@ -11,36 +11,46 @@ import time
 EPWING_URL_SCHEME = 'epwing'
 
 
-class EpwingRenderer(QObject):
+class EpwingRenderer(QThread):
 
     readyRead = pyqtSignal()
-    finished = pyqtSignal()
-    beginning = pyqtSignal()
+    #finished = pyqtSignal()
+    #beginning = pyqtSignal()
 
-    def __init__(self, resource):
+    def __init__(self, resource, parent=None):
         '''`resource` is an Entry or a list of entries to render.
         '''
-        QObject.__init__(self)
+        QThread.__init__(self, parent)
         self.resource = resource
-        self.aborted = False
+        self.exiting = False
 
-        #self.thread = Worker()
+        stylesheet_file = QFile(':/css/entryview.css')
+        stylesheet_file.open(QFile.ReadOnly)
+        self.stylesheet = unicode(QString(stylesheet_file.readAll()))
 
-        self.beginning.connect(self._begin)
+        #self.beginning.connect(self._begin)
 
-    def begin(self):
-        QTimer.singleShot(0, self, SIGNAL('beginning()'))
+    def stop(self):
+        print 'stop()'
+        self.exiting = True
 
-    @pyqtSlot()
-    def abort(self):
-        self.aborted = True
+    def __del__(self):
+        print 'EpwingRenderer.__del__'
+        self.exiting = True
+        print 'wait()'
+        #self.wait()
+        print 'done waiting'
 
-    @pyqtSlot()
-    def _begin(self):
+    def render(self):
+        #QTimer.singleShot(0, self, SIGNAL('beginning()'))
+        self.start()
+
+    #@pyqtSlot()
+    def run(self):
         if isinstance(self.resource, (list, tuple)):
-            self.render(self.render_entries(self.resource))
+            self._render(self.render_entries(self.resource))
         else:
-            self.render(self.render_entry(self.resource))
+            self._render(self.render_entry(self.resource))
 
     #def bytesAvailable(self):
         #if self.content:
@@ -59,24 +69,24 @@ class EpwingRenderer(QObject):
         self.content = ''
         return content
 
-    def render(self, renderer):
+    def _render(self, renderer):
         '''`renderer` is an iterator that yields the data to be outputted.
         '''
         self.offset = 0
         self.content = ''
         for chunk in renderer:
-            if self.aborted:
+            if self.exiting:
                 break
 
             self.content = ''.join([self.content, chunk.encode('utf8')])
 
             # queue the signal rather than emit it directly since the browser
             # hasn't connected to it yet while initializing this object.
-            time.sleep(0.5)
             QTimer.singleShot(0, self, SIGNAL('readyRead()'))
+            #time.sleep(0.2)
 
-        print 'finished'
-        QTimer.singleShot(0, self, SIGNAL('finished()'))
+        print 'render finished'
+        #QTimer.singleShot(0, self, SIGNAL('finished()'))
 
     def render_entry(self, entry):
         '''Renders a single entry.
@@ -199,11 +209,6 @@ class EpwingReply(QNetworkReply):
         uri = unicode(url.toEncoded()).split(self.url_scheme + '://')[1]
         self.resource = route_dictionary_uri(uri, self.book_manager.books.values())
 
-        stylesheet_file = QFile(':/css/entryview.css')
-        stylesheet_file.open(QFile.ReadOnly)
-        self.stylesheet = unicode(QString(stylesheet_file.readAll()))
-
-        self.content = None
         self.offset = 0
         self.content = ''
         self.aborted = False
@@ -214,22 +219,31 @@ class EpwingReply(QNetworkReply):
 
         self.open(self.ReadOnly | self.Unbuffered)
 
-        self.renderer = EpwingRenderer(self.resource)
-        self.renderer.readyRead.connect(self.get_rendered_data)
+        self.renderer = EpwingRenderer(self.resource, parent=self)
         self.renderer.finished.connect(self._finished)
-        self.renderer.begin()
+        self.renderer.terminated.connect(self._finished)
+        self.renderer.readyRead.connect(self.get_rendered_data)
+        self.renderer.render()
         #self.setHeader(QNetworkRequest.ContentLengthHeader, QVariant(len(self.content)))
         print 'done with init'
 
+    def __del__(self):
+        print 'EpwingReply.__del__'
+        self.renderer.__del__()
+        self.renderer.wait()
+        #del self.renderer
+        #self.renderer.
+        print 'done with __del__'
 
     @pyqtSlot()
     def _finished(self):
+        print 'reply finished'
         QTimer.singleShot(0, self, SIGNAL('finished()'))
 
     def abort(self):
         '''Public slot to abort the operation.
         '''
-        self.renderer.abort()
+        self.renderer.stop()
 
     def bytesAvailable(self):
         if self.content:
