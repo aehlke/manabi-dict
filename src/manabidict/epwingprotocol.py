@@ -31,38 +31,19 @@ class EpwingRenderer(QThread):
         #self.beginning.connect(self._begin)
 
     def stop(self):
-        print 'stop()'
         self.exiting = True
 
     def __del__(self):
-        print 'EpwingRenderer.__del__'
         self.exiting = True
-        print 'wait()'
-        #self.wait()
-        print 'done waiting'
 
     def render(self):
-        #QTimer.singleShot(0, self, SIGNAL('beginning()'))
         self.start()
 
-    #@pyqtSlot()
     def run(self):
         if isinstance(self.resource, (list, tuple)):
             self._render(self.render_entries(self.resource))
         else:
             self._render(self.render_entry(self.resource))
-
-    #def bytesAvailable(self):
-        #if self.content:
-            #return len(self.content) - self.offset
-    
-    #def readData(self, maxSize):
-        #if self.offset < len(self.content):
-            #end = min(self.offset + maxSize, len(self.content))
-            #data = self.content[self.offset:end]
-            #self.offset = end
-
-            #return data
 
     def readAll(self):
         content = self.content
@@ -85,7 +66,6 @@ class EpwingRenderer(QThread):
             QTimer.singleShot(0, self, SIGNAL('readyRead()'))
             #time.sleep(0.2)
 
-        print 'render finished'
         #QTimer.singleShot(0, self, SIGNAL('finished()'))
 
     def render_entry(self, entry):
@@ -118,11 +98,9 @@ class EpwingRenderer(QThread):
             <table width="98%" class="dict-divider" onclick="toggle_entry('entry-{0}', 'arrow-down-{0}', 'arrow-up-{0}');">
                 <tr>
                     <td>
-                        <img src="data:image/png;base64,''',
-                            qrc_png_base64_data(':/images/DisclosureDown.png'),
+                        <img src="data:image/png;base64,''', qrc_png_base64_data(':/images/DisclosureDown.png'),
                         '''" class="dict-divider-arrow" id="arrow-down-{0}" style="display:block">
-                        <img src="data:image/png;base64,''',
-                            qrc_png_base64_data(':/images/DisclosureUp.png'),
+                        <img src="data:image/png;base64,''', qrc_png_base64_data(':/images/DisclosureUp.png'),
                         '''" class="dict-divider-arrow" id="arrow-up-{0}" style="display:none">
                     </td>
                     <td width="49%"><hr style="border-style:solid none none none; border-width:1px"></td>
@@ -225,19 +203,14 @@ class EpwingReply(QNetworkReply):
         self.renderer.readyRead.connect(self.get_rendered_data)
         self.renderer.render()
         #self.setHeader(QNetworkRequest.ContentLengthHeader, QVariant(len(self.content)))
-        print 'done with init'
 
     def __del__(self):
-        print 'EpwingReply.__del__'
-        self.renderer.__del__()
+        #self.renderer.__del__()
+        self.renderer.stop()
         self.renderer.wait()
-        #del self.renderer
-        #self.renderer.
-        print 'done with __del__'
 
     @pyqtSlot()
     def _finished(self):
-        print 'reply finished'
         QTimer.singleShot(0, self, SIGNAL('finished()'))
 
     def abort(self):

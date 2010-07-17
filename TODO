@@ -29,8 +29,6 @@ drag-n-drop for folders into the Preferences table to install a dictionary
 
 combine ~suffix entries back into main entry somehow (probably per dictionary, after detecting which dict it is)
 
--sanseido super daijirin sometimes returns multiple references to the same entry in search results, thereby messing up category search
-
 .iso mounting somehow
 
 File->New Window support
@@ -50,16 +48,22 @@ show word commonality
 
 search method detection
 
+some kind of mouse hover furigana or something
+
+
 
 BUGS:
 the sample test ej,je dict shows twice as many entries as it should (misdetermining entry endpoint)
 resize book select on switch
 mouse-wheel scroll focus is wrong for the entry's scrollbar (scroll down in results list all the way, then entry scrolls too)
 book selection combobox changes height sometimes
-webkit selection bg color is wrong
 the search field clear button is showing after a delay
 pressing 'Enter' in the search field with Japanese input method on doesn't work as expected
 can't tab focus selectBook
+
+terminators: see kenkyusha shineiwa, `eat dog`
+
+look at entry `what`, collapse the first dict entry in it, it collapses the following 2 too.
 
 epywing bugs:
 'dame' in hiragana is broke in supa readers (see: kotonoko)

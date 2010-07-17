@@ -830,7 +830,6 @@ class Dictionary(QMainWindow):
             results = list(islice(selected_book.search(
                     query, search_method=search_method), 0, max_results_per_book))
 
-        #results = self.book_manager.search_all(query, search_method='prefix')#, container=container)
         self.show_results(results)
     
     def show_results(self, results):
@@ -860,6 +859,8 @@ class Dictionary(QMainWindow):
 
         if isinstance(results, dict):
             def sort_key(e):
+                return e[1]
+                print e
                 key = e[0]
                 return key.lower().strip()
 

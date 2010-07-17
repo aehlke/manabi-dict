@@ -38,7 +38,6 @@ class MListWidget2(MListWidget):
     def focusInEvent(self, event):
         '''Shift the focus to the proxy line edit.
         '''
-        print 'mlistwidget focus in'
         MListWidget.focusInEvent(self, event)
         self.proxy_widget.setFocus()
         event.accept()
