@@ -16,6 +16,7 @@ import inspect
 from preferences import Preferences
 from mspacer import MSpacer
 from msegmentedbutton import MSegmentedButton
+from historyitems import UrlHistoryItem
 
 from epwingprotocol import MNetworkAccessManager
 
@@ -55,6 +56,8 @@ class KeyPressFilter(QObject):
     # non-printing characters
     control_chars = u''.join(map(unichr, range(0,32) + range(127,160)))
 
+    native_gesture_event = 197
+
     def __init__(self, parent=None):
         '''`parent` must be a window object.
         '''
@@ -66,6 +69,8 @@ class KeyPressFilter(QObject):
         Only handle events for .
         '''
         if self.parent.isActiveWindow():
+            #print event
+            #print event.type() == QEvent.Gesture
             search_field = self.parent.ui.searchField.search_field
             if event.type() == QEvent.KeyPress:
                 key_event = QKeyEvent(event)
@@ -74,7 +79,7 @@ class KeyPressFilter(QObject):
                         and key_event.text() \
                         and key_event.text() not in self.control_chars:
                     search_field.setFocus()
-                    #search_field.clear()
+                    search_field.clear()
                     search_field.keyPressEvent(event)
                     return True
                 elif key_event.key() in [Qt.Key_PageUp, Qt.Key_PageDown, Qt.Key_Home, Qt.Key_End]:
@@ -90,6 +95,24 @@ class KeyPressFilter(QObject):
                     #search_field.clear()
                     search_field.inputMethodEvent(input_method_event)
                     return True
+            elif event.type() == QEvent.Gesture:
+                swipe = event.gesture(Qt.SwipeGesture)
+
+                if swipe and swipe.state() == Qt.GestureFinished:
+                    # go back or forward in history
+                    if swipe.horizontalDirection() == swipe.Left:
+                        self.parent.go_back()
+                    elif swipe.horizontalDirection() == swipe.Right:
+                        self.parent.go_forward()
+                    return True
+            #elif event.type() == self.native_gesture_event:# QEvent.NativeGesture:
+                #print 'gesture'
+                #print event
+                
+                #swipe = event.gesture(Qt.SwipeGesture)
+                #print swipe
+                ##gesture_event = QGestureEvent(event)
+                ##print gesture_event
         return QObject.eventFilter(self, obj, event)
             
 
@@ -115,6 +138,8 @@ class Dictionary(QMainWindow):
         self._current_entry_hash = None
         #self._staged_back_item = None
         self._results_last_shown_at = 0
+        self._push_history_on_next_stage = False
+        self._last_query = None
 
         self._finishedUiSetup = False
 
@@ -125,6 +150,7 @@ class Dictionary(QMainWindow):
         self.setupActions()
         self.setupTabOrder()
         self.setupKeyboardEventFilter()
+        self.setupGestures()
         self.restoreUiState()
         self.setupFinalUi()
 
@@ -285,6 +311,12 @@ class Dictionary(QMainWindow):
         ev.page().selectionChanged.connect(
                 lambda: self.ui.actionCopy.setEnabled(bool(self.ui.entryView.selectedText())))
 
+        # keyboard shortcuts for back/forward
+        shortcut = [QKeySequence(Qt.Key_BracketLeft), QKeySequence(Qt.Key_Left)]
+        self.ui.actionBack.setShortcuts(shortcut)
+        shortcut = [QKeySequence(Qt.Key_BracketRight), QKeySequence(Qt.Key_Right)]
+        self.ui.actionForward.setShortcuts(shortcut)
+
     def setupTabOrder(self):
         ui = self.ui
         widgets = [ui.selectBook, ui.searchMethod, ui.searchField.search_field,
@@ -300,6 +332,9 @@ class Dictionary(QMainWindow):
         self.key_press_filter = KeyPressFilter(parent=self)
         q_app = QApplication.instance()
         q_app.installEventFilter(self.key_press_filter)
+
+    def setupGestures(self):
+        self.grabGesture(Qt.SwipeGesture)
 
     def restoreUiState(self):
         '''Restores UI state from the last time it was opened.
@@ -329,27 +364,28 @@ class Dictionary(QMainWindow):
             #self.ui.entryView.setFocus()
             sr.setFocus()
             #sf.selectAll()
-            self.stage_history()
+            #self.stage_history()
 
     def on_searchField_keyUpPressed(self):
         sr = self.ui.searchResults
 
         if sr.currentRow() > 0:
             sr.setCurrentRow(sr.currentRow() - 1)
-            self.stage_history()
+            #self.stage_history()
 
     def on_searchField_keyDownPressed(self):
         sr = self.ui.searchResults
         if sr.currentRow() < sr.count() - 1:
             sr.setCurrentRow(sr.currentRow() + 1)
-            self.stage_history()
+            #self.stage_history()
 
     def on_searchField_textEdited(self, text):
         self.do_search(unicode(text))
 
     def on_clearSearch_clicked(self):
         sr, sf = self.ui.searchResults, self.ui.searchField
-        self.push_history()
+        #self.push_history()
+        #self._push_history_on_next_stage = True
         sr.clear()
         sf.search_field.setFocus()
         
@@ -359,6 +395,7 @@ class Dictionary(QMainWindow):
 
     def on_searchResults_currentItemChanged(self, current, previous):
         if current:
+            #self.stage_history()
             item_data = current.data(Qt.UserRole).toPyObject()
             # if this result is a multi-dictionary search result, 
             # it will be a list. Otherwise it will be an Entry.
@@ -366,6 +403,7 @@ class Dictionary(QMainWindow):
                 self.show_entries(item_data)
             else:
                 self.show_entry(item_data)
+            #self.stage_history()
 
 
     def on_searchResults_itemActivated(self, item):
@@ -386,10 +424,11 @@ class Dictionary(QMainWindow):
     
     def on_entryView_linkClicked(self, url):
         url = unicode(url.toString())
-        print url
+        #print url
 
-        self.stage_history()
-        self.push_history()
+        #self.stage_history()
+        #self.push_history()
+        self._push_history_on_next_stage = True
 
         if '#' in url:
             # it contains a hash, which will scroll the view to the given named anchor
@@ -400,7 +439,7 @@ class Dictionary(QMainWindow):
             self._current_entry_hash = None
             resource = route_dictionary_uri(url, self.book_manager.books.values())
             self.show_entry(resource)
-        self.stage_history()
+        #self.stage_history()
 
 
     # Other UI
@@ -422,12 +461,27 @@ class Dictionary(QMainWindow):
 
     @pyqtSignature('')
     def on_actionBack_triggered(self):
+        '''Action for toolbar button.
+        '''
         self.go_back()
 
     @pyqtSignature('')
     def on_actionForward_triggered(self):
+        '''Action for toolbar button.
+        '''
         self.go_forward()
 
+    @pyqtSignature('')
+    def on_actionBack2_triggered(self):
+        '''Action for menu item.
+        '''
+        self.go_back()
+
+    @pyqtSignature('')
+    def on_actionForward2_triggered(self):
+        '''Action for menu item.
+        '''
+        self.go_forward()
 
     @pyqtSignature('')
     def on_actionDecreaseFontSize_triggered(self):
@@ -507,7 +561,7 @@ class Dictionary(QMainWindow):
         '''
         menu.clear()
         for index, item in enumerate(history_items, start=1):
-            action = QAction(item['label'], menu)
+            action = QAction(item.label, menu)
             func = partial(self._go_history, index * direction)
             action.triggered.connect(func)
             menu.addAction(action)
@@ -534,51 +588,81 @@ class Dictionary(QMainWindow):
         #self.push_history()
         self.stage_history(clear_forward_items=False)
         try:
-            back_item = self.history.go(index)
-            print 'going {0} to:'.format(index)#,
+            history_item = self.history.go(index)
+            #print 'going {0} to:'.format(index)#,
             #print back_item
-            print len(self.history)
-            if 'search_results' in back_item:
-                self.show_results(back_item['search_results'])
-                self.ui.searchResults.setCurrentRow(back_item['search_results_current_row'])
-            self.show_entry(back_item['entry'])
-            if 'entry_hash' in back_item:
-                self.ui.entryView.scrollToAnchor(back_item['entry_hash'])
-            if 'book' in back_item:
-                self.select_book(book=back_item['book'])
+            #print len(self.history)
+            self.load_history_item(history_item)
+            #if 'search_results' in back_item:
+                #self.show_results(back_item['search_results'])
+                #self.ui.searchResults.setCurrentRow(back_item['search_results_current_row'])
+            #self.show_entry(back_item['entry'])
+            #if 'entry_hash' in back_item:
+                #self.ui.entryView.scrollToAnchor(back_item['entry_hash'])
+            #if 'book' in back_item:
+                #self.select_book(book=back_item['book'])
         except IndexError:
-            # already at edge of history
-            print 'indexerror!'
+            # already at edge of history, ignore request
             pass
         self.refresh_history_buttons()
-        
+
+    def create_history_item(self, url=None):
+        '''Creates a UrlHistoryItem based on the current entry's heading and 
+        '''
+        if not url:
+            # get current entry URL
+            url = unicode(self.ui.entryView.url().toString())
+
+        entries = route_dictionary_uri(url, self.book_manager.books.values())
+
+        if not entries:
+            # no matching entries for this URL
+            return None
+
+        if isinstance(entries, (list, tuple)):
+            entry = entries[0]
+        else:
+            entry = entries
+
+        label = entry.heading if entry.heading else entry.guess_heading_from_text()
+        label = strip_tags(label)
+        item = UrlHistoryItem(label, url)
+        return item
+
+    def load_history_item(self, item):
+        url = item.url
+        self.load_url(url, stage_history=False)
 
     def push_history(self):
         '''Pushes the currently staged back item to the history manager.
-        We push a dictionary rather than just a URI because we want to load both search results and the entry when going back.
         '''
         #print self.history
         #if self._staged_back_item
         #FIXME
-        return
         if self.history.current_location:
-            print 'pushing staged location',
-            #print self.history.current_location
-            #print self.staged_back_item
-            #self.history.push(self._staged_back_item)
             self.history.push()
-            #print self.history._back
-            #self._staged_back_item = None
-        #print len(self.history)
-        self.refresh_history_buttons()
-        #print self.history
 
-    def stage_history(self, clear_forward_items=True, label=None):
+        self.refresh_history_buttons()
+        
+
+    def stage_history(self, clear_forward_items=True, label=None, url=None):
         '''Set the staged back item to the current entry and search context.
         `label` is what the history item will show as in menus. Defaults to the entry heading.
         '''
         #FIXME
+        if self._push_history_on_next_stage:
+            self.push_history()
+            self._push_history_on_next_stage = False
+
+        item = self.create_history_item(url=url)
+        print item
+        self.history.current_location = item
+
+        if clear_forward_items:
+            self.history.forward_items = []
+
         return
+
         entry = self._current_entry
 
         if not label:
@@ -618,7 +702,6 @@ class Dictionary(QMainWindow):
         forward_enabled = bool(self.history.forward_items)
         self.ui.actionForward.setEnabled(forward_enabled)
         self.ui.history_buttons.right_button.setEnabled(forward_enabled)
-
 
     def zoom_entry_view(self, zoom_delta):
         ev = self.ui.entryView
@@ -815,6 +898,13 @@ class Dictionary(QMainWindow):
 
         if not query:
             query = unicode(self.ui.searchField.search_field.text())
+
+        if self._last_query is None:
+            self._last_query = query
+        elif query != self._last_query:
+            self._push_history_on_next_stage = True
+            self._last_query = query
+
         if not search_method:
             search_method = self.selected_search_method()
 
@@ -860,15 +950,15 @@ class Dictionary(QMainWindow):
         if isinstance(results, dict):
             def sort_key(e):
                 return e[1]
-                print e
-                key = e[0]
-                return key.lower().strip()
+                #print e
+                #key = e[0]
+                #return key.lower().strip()
 
             for heading, entries in sorted(results.items(), key=sort_key):
                 if ran_at < self._results_last_shown_at:
                     return
                 add_result(heading, entries)
-                if not i % 4:
+                if not i % 3:
                     q_app.processEvents()
                 i += 1
         else:
@@ -876,7 +966,7 @@ class Dictionary(QMainWindow):
                 if ran_at < self._results_last_shown_at:
                     return
                 add_result(result.heading, result)
-                if not i % 4:
+                if not i % 3:
                     q_app.processEvents()
                 i += 1
 
@@ -912,23 +1002,28 @@ class Dictionary(QMainWindow):
 
     def show_entry(self, entry):
         self._current_entry = entry
-        self._show_loading_message()
+        #self._show_loading_message()
         #self._set_entryView_body(entry.text)
-        uri = self._generate_url(False, entry)
-        #self.load_uri('qrc:/css/entryview.css')
-        self.load_uri(uri)
+        url = self._generate_url(False, entry)
+        #self.load_url('qrc:/css/entryview.css')
+        self.load_url(url)
 
     def show_entries(self, entries):
         self._current_entry = entries
-        self._show_loading_message()
-        uri = self._generate_url(True, *entries)
-        self.load_uri(uri)
+        #self._show_loading_message()
+        url = self._generate_url(True, *entries)
+        self.load_url(url)
 
 
-    def load_uri(self, uri):
-        '''`uri` is a string.
+    def load_url(self, url, stage_history=True):
+        '''`url` is a string.
         '''
-        self.ui.entryView.load(QUrl(uri))
+        self._show_loading_message()
+        self.ui.entryView.load(QUrl(url))
+        #print 'gonna stage:',
+        #print self.ui.entryView.url().toString()
+        if stage_history:
+            self.stage_history(url=url)
 
 
 

@@ -1,4 +1,11 @@
 
+FINAL TODO BEFORE FIRST RELEASE:
+up/down swipe
+url hash support for history (only loading needs it I think)
+
+
+
+
 TODO:
 
 refactor style sheet resources, and look at the dictionary.app ones
@@ -39,6 +46,7 @@ Window menu for mac
 
 list of dictionaries when no entry is shown, in entryView, like Dictionary.app
 
+
 IDEAS:
 allow multi select on the results list, to show multiple entries?
 
@@ -64,6 +72,12 @@ can't tab focus selectBook
 terminators: see kenkyusha shineiwa, `eat dog`
 
 look at entry `what`, collapse the first dict entry in it, it collapses the following 2 too.
+
+sometimes when an entry is still loading, if a new search starts, it breaks
+'falla' in gneius daijiten has unmatched span error (maybe related to above)
+
+Key_left shortcut for actionBack isn't working (likewise for actionForward)
+
 
 epywing bugs:
 'dame' in hiragana is broke in supa readers (see: kotonoko)
