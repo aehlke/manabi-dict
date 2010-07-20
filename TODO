@@ -1,12 +1,13 @@
 
 FINAL TODO BEFORE FIRST RELEASE:
-up/down swipe
 url hash support for history (only loading needs it I think)
 
 
 
 
 TODO:
+
+up/down swipe
 
 refactor style sheet resources, and look at the dictionary.app ones
 

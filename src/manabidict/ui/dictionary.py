@@ -56,8 +56,6 @@ class KeyPressFilter(QObject):
     # non-printing characters
     control_chars = u''.join(map(unichr, range(0,32) + range(127,160)))
 
-    native_gesture_event = 197
-
     def __init__(self, parent=None):
         '''`parent` must be a window object.
         '''
@@ -105,14 +103,7 @@ class KeyPressFilter(QObject):
                     elif swipe.horizontalDirection() == swipe.Right:
                         self.parent.go_forward()
                     return True
-            #elif event.type() == self.native_gesture_event:# QEvent.NativeGesture:
-                #print 'gesture'
-                #print event
-                
-                #swipe = event.gesture(Qt.SwipeGesture)
-                #print swipe
-                ##gesture_event = QGestureEvent(event)
-                ##print gesture_event
+
         return QObject.eventFilter(self, obj, event)
             
 
@@ -134,9 +125,6 @@ class Dictionary(QMainWindow):
         self.history = HistoryManager()
         self.settings = QSettings()
 
-        self._current_entry = None
-        self._current_entry_hash = None
-        #self._staged_back_item = None
         self._results_last_shown_at = 0
         self._push_history_on_next_stage = False
         self._last_query = None
@@ -432,14 +420,15 @@ class Dictionary(QMainWindow):
 
         if '#' in url:
             # it contains a hash, which will scroll the view to the given named anchor
-            hash_string = url.split('#')[-1]
-            self.ui.entryView.scrollToAnchor(hash_string)
-            self._current_entry_hash = hash_string
+            self.load_url(url, show_loading_message=False)
+            #self.ui.entryView.scrollToAnchor(hash_string)
         else:
-            self._current_entry_hash = None
             resource = route_dictionary_uri(url, self.book_manager.books.values())
             self.show_entry(resource)
-        #self.stage_history()
+
+    def on_entryView_loadFinished(self, ok):
+        # rewrite links to point to anchors in the page
+        self.ui.entryView.page().mainFrame().evaluateJavaScript('fix_anchor_links();')
 
 
     # Other UI
@@ -613,6 +602,7 @@ class Dictionary(QMainWindow):
             # get current entry URL
             url = unicode(self.ui.entryView.url().toString())
 
+        #print url
         entries = route_dictionary_uri(url, self.book_manager.books.values())
 
         if not entries:
@@ -649,48 +639,20 @@ class Dictionary(QMainWindow):
         '''Set the staged back item to the current entry and search context.
         `label` is what the history item will show as in menus. Defaults to the entry heading.
         '''
-        #FIXME
         if self._push_history_on_next_stage:
             self.push_history()
             self._push_history_on_next_stage = False
 
         item = self.create_history_item(url=url)
-        print item
         self.history.current_location = item
 
         if clear_forward_items:
             self.history.forward_items = []
 
-        return
-
-        entry = self._current_entry
-
-        if not label:
-            if entry.heading:
-                label = strip_tags(entry.heading)
-            else:
-                lines = strip_tags(entry.text.replace('<br>', '\n')).split()
-                label = lines[0] if lines else ''
-
-        staged_back_item = {
-            'label': label,
-            'book': self.selected_book(),
-            'entry': entry,
-            'search_results': self._current_results,
-            'search_results_current_row': self.ui.searchResults.currentRow(),
+                #lines = strip_tags(entry.text.replace('<br>', '\n')).split()
+        #'search_results': self._current_results,
+        #'search_results_current_row': self.ui.searchResults.currentRow(),
             #'':
-        }
-        if self._current_entry_hash:
-            staged_back_item['entry_hash'] = self._current_entry_hash
-        self.history.current_location = staged_back_item
-        if clear_forward_items:
-            self.history.forward_items = []
-        #print 'staging:',
-        #print staged_back_item
-        #print len(self.history)
-        #print self.history
-        #print 'staging:',
-        #print self._staged_back_item
 
     def refresh_history_buttons(self):
         '''Enable or disable the history buttons depending on the history state.
@@ -1001,27 +963,22 @@ class Dictionary(QMainWindow):
         return url
 
     def show_entry(self, entry):
-        self._current_entry = entry
-        #self._show_loading_message()
-        #self._set_entryView_body(entry.text)
         url = self._generate_url(False, entry)
-        #self.load_url('qrc:/css/entryview.css')
         self.load_url(url)
 
     def show_entries(self, entries):
-        self._current_entry = entries
-        #self._show_loading_message()
         url = self._generate_url(True, *entries)
         self.load_url(url)
 
 
-    def load_url(self, url, stage_history=True):
+    def load_url(self, url, show_loading_message=True, stage_history=True):
         '''`url` is a string.
         '''
-        self._show_loading_message()
+        if show_loading_message:
+            self._show_loading_message()
+
         self.ui.entryView.load(QUrl(url))
-        #print 'gonna stage:',
-        #print self.ui.entryView.url().toString()
+
         if stage_history:
             self.stage_history(url=url)
 

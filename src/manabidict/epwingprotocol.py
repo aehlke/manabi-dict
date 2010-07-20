@@ -39,11 +39,18 @@ class EpwingRenderer(QThread):
     def render(self):
         self.start()
 
-    def run(self):
-        if isinstance(self.resource, (list, tuple)):
-            self._render(self.render_entries(self.resource))
+    def _get_resource_lock(self, resource):
+        if isinstance(resource, (list, tuple)):
+            return resource[0].eb_lock
         else:
-            self._render(self.render_entry(self.resource))
+            return resource.eb_lock
+
+    def run(self):
+        with self._get_resource_lock(self.resource):
+            if isinstance(self.resource, (list, tuple)):
+                self._render(self.render_entries(self.resource))
+            else:
+                self._render(self.render_entry(self.resource))
 
     def readAll(self):
         content = self.content
@@ -64,7 +71,6 @@ class EpwingRenderer(QThread):
             # queue the signal rather than emit it directly since the browser
             # hasn't connected to it yet while initializing this object.
             QTimer.singleShot(0, self, SIGNAL('readyRead()'))
-            #time.sleep(0.2)
 
         #QTimer.singleShot(0, self, SIGNAL('finished()'))
 
@@ -165,6 +171,33 @@ class EpwingRenderer(QThread):
                             // performs a search for the given node's text, using whatever search method is selected
                             var query = get_text_of_children(node);
                             manabi.search(query);
+                        }
+
+                        function get_anchor_names() {
+                            var names = [];
+                            for (var i=0; i < document.anchors.length; i++) {
+                                var anchor = document.anchors[i];
+                                names.push(anchor.name);
+                            }
+                            return names;
+                        }
+
+                        function fix_anchor_links() {
+                            // fixes epwing:// links that should point to anchors within this page
+                         
+                            var links = document.getElementsByTagName('a');
+                            var anchor_names = get_anchor_names();
+
+                            for (var i=0; i < links.length; i++) {
+                                var link = links[i];
+                                var href = link.href.replace('epwing://', '');
+
+                                if (anchor_names.indexOf(href) != -1) {
+                                    //document.links[i].removeAttribute('href');
+                                    links[i].href = document.location;
+                                    links[i].hash = href;
+                                }
+                            }
                         }
                     </script>
                 </head>
