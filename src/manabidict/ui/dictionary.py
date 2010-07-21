@@ -20,7 +20,7 @@ from historyitems import UrlHistoryItem
 
 from epwingprotocol import MNetworkAccessManager
 
-#from forms.dictionary import Ui_DictionaryWindow
+from forms.dictionary import Ui_DictionaryWindow
 
 #from epywing.manager 
 from epywing.uris import route as route_dictionary_uri, collection_uri_prefix
@@ -108,10 +108,10 @@ class KeyPressFilter(QObject):
             
 
 
-class Dictionary(QMainWindow):
+class Dictionary(QMainWindow):#, Ui_DictionaryWindow):
 
-    ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
-    ui = ui_class()
+    #ui_class, widget_class = uic.loadUiType('../../qtcreator/dictionary.ui')
+    #ui = ui_class()
 
     ZOOM_DELTA = 0.10
     ZOOM_RANGE = (0.4, 4.0,)
@@ -120,6 +120,8 @@ class Dictionary(QMainWindow):
 
     def __init__(self, book_manager, parent=None):
         super(Dictionary, self).__init__(parent)
+
+        self.ui = Ui_DictionaryWindow()
 
         self.book_manager = book_manager
         self.history = HistoryManager()

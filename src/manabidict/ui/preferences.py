@@ -6,15 +6,14 @@ import sys
 import os
 from os import path
 
-#from forms.dictionary import Ui_DictionaryWindow
+from forms.preferences import Ui_PreferencesDialog
 
 #from epywing.manager 
 
+class Preferences(QDialog):#, Ui_PreferencesDialog):
 
-class Preferences(QDialog):
-
-    ui_class, widget_class = uic.loadUiType('../../qtcreator/preferences.ui')
-    ui = ui_class()
+    #ui_class, widget_class = uic.loadUiType('../../qtcreator/preferences.ui')
+    #ui = ui_class()
 
     #booksChanged = pyqtSignal()
 
@@ -22,6 +21,8 @@ class Preferences(QDialog):
         '''`parent` must be a dictionary window.
         '''
         super(Preferences, self).__init__(parent)
+
+        self.ui = Ui_PreferencesDialog()
 
         self.settings = QSettings()
 

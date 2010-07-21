@@ -1,15 +1,16 @@
 
 FINAL TODO BEFORE FIRST RELEASE:
-url hash support for history (only loading needs it I think)
+-url hash support for history (only loading needs it I think)
 
 
 
 
 TODO:
 
+put search results in history items
+
 up/down swipe
 
-refactor style sheet resources, and look at the dictionary.app ones
 
 need inactive toolbar button images
 
@@ -18,12 +19,14 @@ when setting the search field to the result selected (like when they press enter
 
 inactive-styled segmented buttons
 
-
 custom horizontal scrollbar for webview so that it doesn't overlap the corner
 
 prefetch entry text after a search
 
+
 TODO LATER:
+refactor style sheet resources, and look at the dictionary.app ones
+
 on-hover of links, show the entry's title or something
 
 shorter IDs for books. possibly store these in a dotfile in the epwing dir so it's not path-dependent
