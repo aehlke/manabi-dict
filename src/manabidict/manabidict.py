@@ -5,8 +5,10 @@ from PyQt4.QtCore import *
 from PyQt4 import uic
 from PyQt4.Qt import Qt
 import sys
+import os
 
 from epywing import epwing
+from epywing.utils import mecab
 #from epywing import bookmanager.BookManager
 #from bookmanager import BookManager
 from epywing.bookmanager import BookManager
@@ -19,7 +21,12 @@ from ui.dictionary import Dictionary
 ORGANIZATION_NAME = 'Manabi'
 ORGANIZATION_DOMAIN = 'manabi.org'
 APPLICATION_NAME = 'Manabi Dictionary'
-VERSION = '0.01'
+VERSION = '0.000002'
+
+
+base_dir = os.path.dirname(os.path.abspath(__file__))
+mecab.mecab_dir = os.path.join(base_dir, 'mecab')
+
 
 class ManabiDictApplication(QApplication):
     def __init__(self, args):

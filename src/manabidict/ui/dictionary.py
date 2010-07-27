@@ -37,7 +37,6 @@ class JavaScriptBridge(QObject):
         self.setObjectName('JavaScriptBridge')
         self.dictionary_window = dictionary_window
 
-    #@pyqtSlot(unicode)
     @pyqtSignature('QString')
     def search(self, query):
         query = unicode(query)
@@ -329,7 +328,8 @@ class Dictionary(QMainWindow):#, Ui_DictionaryWindow):
     def restoreUiState(self):
         '''Restores UI state from the last time it was opened.
         '''
-        index = int(self.settings.value('ui_state/selected_book_index').toPyObject())
+        index = int(self.settings.value('ui_state/selected_book_index', -1).toPyObject())
+
         if index != -1:
             self.ui.selectBook.setCurrentIndex(index)
     
