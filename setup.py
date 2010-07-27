@@ -39,16 +39,37 @@ python2.6/pyconfig.h dist/Manabi\ Dictionary.app/Contents/Resources/include/pyth
         os.system('chmod 755 dist/Manabi\ Dictionary.app/Contents/Resources/mecab/bin/mecab')
         os.system('cp -r resources/Python.framework dist/Manabi\ Dictionary.app/Contents/Frameworks/')
 
+        os.system('cp /usr/lib/libmecab.1.dylib dist/Manabi\ Dictionary.app/Contents/Frameworks/')
+
         # strip out x86_64 resources
-        os.system('ditto --rsrc --arch i386 Manabi\ Dictionary.app Manabi\ Dictionaryi386.app')
-        os.system('rm -rf Manabi\ Dictionary.app')
-        os.system('mv Manabi\ Dictionaryi386.app Manabi\ Dictionary.app')
+        #os.system('ditto --rsrc --arch i386 dist/Manabi\ Dictionary.app dist/Manabi\ Dictionaryi386.app')
+        #os.system('cp dist/Manabi\ Dictionary.app/Contents/MacOS/Manabi\ Dictionary dist/Manabi\ Dictionaryi386.app/Contents/MacOS/')
+        #os.system('rm -rf dist/Manabi\ Dictionary.app')
+        #os.system('mv dist/Manabi\ Dictionaryi386.app dist/Manabi\ Dictionary.app')
+        # if we strip MacOS/Manabi\ Dictionary, for some reason it will always crash.
+
+        #for f in ['MacOS/python',
+                  #'Frameworks/Python.framework/Versions/2.6/Python',
+                  #'Frameworks/QtWebKit.framework/Versions/4/QtWebKit',
+                  #'Frameworks/QtGui.framework/Versions/4/QtGui',
+                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtGui.so',
+                  #'Frameworks/QtXmlPatterns.framework/Versions/Current/QtXmlPatterns',
+                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtCore.so',
+                  #'Frameworks/QtCore.framework/Versions/4/QtCore',
+                  #'Frameworks/libmecab.1.dylib',
+                  #'Resources/lib/python2.6/lxml/etree.so',
+                  #'Frameworks/QtNetwork.framework/Versions/4/QtNetwork',
+                  #'Resources/mecab/bin/libmecab.1.dylib',
+                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtNetwork.so',
+                  #'Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL',
+                 ]:
+            #os.system(u'lipo -thin i386 {0}{1} -o {0}{1}'.format('dist/Manabi\ Dictionary.app/Contents/', f))
 
 
         #make the dmg with the shell script
         result = os.system('make-dmg.sh')
         if result is not 0:
-            raise Exception('dmg creation failed %d' % result)
+           raise Exception('dmg creation failed %d' % result)
 
 
 #os.system pyc
@@ -84,7 +105,7 @@ setup(
             'semi_standalone': False,
             'iconfile': 'resources/book.icns',
             #'argv_emulation': True,
-            'includes': ['sip', 'PyQt4', 'gzip', 'PyQt4.QtCore', 'PyQt4.QtGui','PyQt4.QtWebKit',],
+            'includes': ['sip', 'PyQt4', 'gzip', 'PyQt4.QtCore', 'PyQt4.QtGui','PyQt4.QtWebKit', 'zlib'],
             'excludes': ['PyQt4.QtDesigner', 'PyQt4.QtOpenGL', 'PyQt4.QtScript',
                          'PyQt4.QtSql', 'PyQt4.QtTest', 'PyQt4.QtXml', 'phonon',
                          'QtOpenGL', 'QtXmlPatterns', 'wx', 'tcl', 'Tkinter',
