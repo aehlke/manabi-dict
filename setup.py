@@ -96,7 +96,7 @@ def get_files(file_spec):
 
 if IS_WINDOWS:
     DATA_FILES = [
-        ('resources/PlugIns', get_files('resources/PlugIns/*')),
+        ('resources/PlugIns/imageformats', get_files('resources/PlugIns/imageformats/*')),
         ('resources/mecab', get_files('resources/mecab/*')),
     ]
 else:
