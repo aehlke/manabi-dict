@@ -8,12 +8,16 @@ import sys
 IS_WINDOWS = sys.platform in ('win32', )
 
 if IS_WINDOWS:
-    #import py2exe
+    import py2exe
     SETUP_REQUIRES = ['py2exe']
 else:
-    #import py2app
+    import py2app
     SETUP_REQUIRES = ['py2app']
 
+#install_requires=[
+    #'lxml>=2.2.4',
+    #'ebmodule>=2.2',
+#]
 #from distribute_setup import use_setuptools
 #use_setuptools()
 
