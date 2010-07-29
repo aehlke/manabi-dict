@@ -1,22 +1,19 @@
 
 from setuptools import setup, Command
 import os
-import py2app
 from src import manabidict
 #from src.manabidict.manabidict import VERSION
 import sys
 
+try:
+    import py2exe
+except ImportError:
+    import py2app
+
 #from distribute_setup import use_setuptools
 #use_setuptools()
 
-#os.system('/bin/rm -rf dist')
-#os.system('/bin/rm -rf build')
 
-def find_file_in_path(filename):
-    for include_path in sys.path:
-        file_path = os.path.join(include_path, filename)
-        if os.path.exists(file_path):
-            return file_path
 
 
 class bdist_dmg(Command):
@@ -47,33 +44,32 @@ python2.6/pyconfig.h dist/Manabi\ Dictionary.app/Contents/Resources/include/pyth
         #os.system('rm -rf dist/Manabi\ Dictionary.app')
         #os.system('mv dist/Manabi\ Dictionaryi386.app dist/Manabi\ Dictionary.app')
         # if we strip MacOS/Manabi\ Dictionary, for some reason it will always crash.
-
-        #for f in ['MacOS/python',
-                  #'Frameworks/Python.framework/Versions/2.6/Python',
-                  #'Frameworks/QtWebKit.framework/Versions/4/QtWebKit',
-                  #'Frameworks/QtGui.framework/Versions/4/QtGui',
-                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtGui.so',
-                  #'Frameworks/QtXmlPatterns.framework/Versions/Current/QtXmlPatterns',
-                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtCore.so',
-                  #'Frameworks/QtCore.framework/Versions/4/QtCore',
-                  #'Frameworks/libmecab.1.dylib',
-                  #'Resources/lib/python2.6/lxml/etree.so',
-                  #'Frameworks/QtNetwork.framework/Versions/4/QtNetwork',
-                  #'Resources/mecab/bin/libmecab.1.dylib',
-                  #'Resources/lib/python2.6/lib-dynload/PyQt4/QtNetwork.so',
-                  #'Frameworks/QtOpenGL.framework/Versions/4/QtOpenGL',
-                 ]:
-            #os.system(u'lipo -thin i386 {0}{1} -o {0}{1}'.format('dist/Manabi\ Dictionary.app/Contents/', f))
-
+        #os.system(u'lipo -thin i386 {0}{1} -o {0}{1}'.format('dist/Manabi\ Dictionary.app/Contents/', f))
 
         #make the dmg with the shell script
         result = os.system('make-dmg.sh')
         if result is not 0:
            raise Exception('dmg creation failed %d' % result)
 
+class bdist_exe(Command):
+    description = "create a Mac disk image (.dmg) binary distribution"
+    user_options = []
+
+    def initialize_options(self): pass
+
+    def finalize_options(self): pass
+
+    def run(self):
+        os.system('rm -rf dist')
+        os.system('rm -rf build')
+        self.run_command('py2exe')
+        #os.system('cp qt.conf dist/Manabi\ Dictionary.app/Contents/Resources')
+
 
 #os.system pyc
 
+
+# py2app stuff
 
 PLIST = {
     'CFBundleIdentifier': 'org.manabi.dictionary',
@@ -89,6 +85,38 @@ DATA_FILES = [
     './resources/mecab',
 ]
 
+PY2APP_OPTIONS = {
+    'semi_standalone': False,
+    'iconfile': 'resources/book.icns',
+    #'argv_emulation': True,
+    'includes': ['sip', 'PyQt4', 'gzip', 'PyQt4.QtCore', 'PyQt4.QtGui','PyQt4.QtWebKit', 'zlib'],
+    'excludes': ['PyQt4.QtDesigner', 'PyQt4.QtOpenGL', 'PyQt4.QtScript',
+                    'PyQt4.QtSql', 'PyQt4.QtTest', 'PyQt4.QtXml', 'phonon',
+                    'QtOpenGL', 'QtXmlPatterns', 'wx', 'tcl', 'Tkinter',
+                    'numpy', 'scipy', 'pygame', 'matplotlib', 'PIL'],
+    'dylib_excludes': ['libncurses.5.dylib', '_wxagg.so', '_tkagg.so', '_gtkagg.so', 'wx.so'],
+    'packages': ['lxml'],
+    'optimize': 0,
+    'plist': PLIST,
+}
+
+
+# py2exe
+
+PY2EXE_OPTIONS = {
+    'compressed': True,
+    'includes': ['PyQt4._qt', 'sip', 'gzip'],
+    'excludes': ['pywin', 'Tkinter', 'Tkconstants', 'tcl',],
+
+}
+
+WINDOWS = {
+    'script': 'src/manabidict/manabidict.py',
+    #'icon_resources': [(1, '')]
+}
+
+
+
 setup(
     name='Manabi Dictionary',
     version='0.000002',
@@ -100,22 +128,13 @@ setup(
     zip_safe=False,
     #include_package_data=True,
     data_files=DATA_FILES,
+
     options={
-        'py2app': {
-            'semi_standalone': False,
-            'iconfile': 'resources/book.icns',
-            #'argv_emulation': True,
-            'includes': ['sip', 'PyQt4', 'gzip', 'PyQt4.QtCore', 'PyQt4.QtGui','PyQt4.QtWebKit', 'zlib'],
-            'excludes': ['PyQt4.QtDesigner', 'PyQt4.QtOpenGL', 'PyQt4.QtScript',
-                         'PyQt4.QtSql', 'PyQt4.QtTest', 'PyQt4.QtXml', 'phonon',
-                         'QtOpenGL', 'QtXmlPatterns', 'wx', 'tcl', 'Tkinter',
-                         'numpy', 'scipy', 'pygame', 'matplotlib', 'PIL'],
-            'dylib_excludes': ['libncurses.5.dylib', '_wxagg.so', '_tkagg.so', '_gtkagg.so', 'wx.so'],
-            'packages': ['lxml'],
-            'optimize': 0,
-            'plist': PLIST,
-        },
+        'py2app': PY2APP_OPTIONS,
+        'py2exe': PY2EXE_OPTIONS,
     },
+
+    windows=WINDOWS,
 
     setup_requires=['py2app'],
     #cmdclass = {'bdist_dmg': bdist_dmg, 'bdist': bdist},
