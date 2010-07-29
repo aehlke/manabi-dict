@@ -5,10 +5,14 @@ from src import manabidict
 #from src.manabidict.manabidict import VERSION
 import sys
 
-try:
-    import py2exe
-except ImportError:
-    import py2app
+IS_WINDOWS = sys.platform in ('win32', )
+
+if IS_WINDOWS:
+    #import py2exe
+    SETUP_REQUIRES = ['py2exe']
+else:
+    #import py2app
+    SETUP_REQUIRES = ['py2app']
 
 #from distribute_setup import use_setuptools
 #use_setuptools()
@@ -136,7 +140,7 @@ setup(
 
     windows=WINDOWS,
 
-    setup_requires=['py2app'],
+    setup_requires=SETUP_REQUIRES,
     #cmdclass = {'bdist_dmg': bdist_dmg, 'bdist': bdist},
     #cmdclass = { 'bdist': bdist},
     cmdclass = { 'bdist_dmg': bdist_dmg},
