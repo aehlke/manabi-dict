@@ -118,10 +118,10 @@ PY2EXE_OPTIONS = {
 
 }
 
-WINDOWS = {
+WINDOWS = [{
     'script': 'src/manabidict/manabidict.py',
     #'icon_resources': [(1, '')]
-}
+}]
 
 
 
