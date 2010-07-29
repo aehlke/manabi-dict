@@ -138,7 +138,7 @@ setup(
     #include_package_data=True,
     data_files=DATA_FILES,
 
-    install_requires = ['PyQt4']
+    install_requires = ['PyQt4'],
 
     options={
         'py2app': PY2APP_OPTIONS,
