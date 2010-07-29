@@ -124,8 +124,10 @@ PY2APP_OPTIONS = {
 # py2exe
 
 PY2EXE_OPTIONS = {
-    'compressed': True,
-    'includes': ['PyQt4', 'sip', 'gzip', 'eb'],
+    'compressed': False, #True
+    'optimize': 2,
+    'bundle_files': 1,
+    'includes': ['PyQt4', 'sip', 'gzip', 'eb'],#, 'ui'],
     'excludes': ['pywin', 'Tkinter', 'Tkconstants', 'tcl', 'PyQt4.phonon', 'PyQt4.QtOpenGL', 'wx'],
     'packages': ['lxml'],
 
