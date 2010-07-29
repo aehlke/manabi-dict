@@ -90,6 +90,7 @@ PLIST = {
 }
 
 def get_files(file_spec):
+    import glob
     path = os.path.normpath(file_spec)
     return glob.glob(path) #filter(lambda x: not x.endswith('CVS'), glob.glob(path))
 
