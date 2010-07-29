@@ -14,6 +14,7 @@ else:
     import py2app
     SETUP_REQUIRES = ['py2app']
 
+
 #install_requires=[
     #'lxml>=2.2.4',
     #'ebmodule>=2.2',
@@ -136,6 +137,8 @@ setup(
     zip_safe=False,
     #include_package_data=True,
     data_files=DATA_FILES,
+
+    install_requires = ['PyQt4']
 
     options={
         'py2app': PY2APP_OPTIONS,
