@@ -89,10 +89,20 @@ PLIST = {
                            ##'/System/Library/Frameworks/Python.framework/Versions/2.6/Python'],
 }
 
-DATA_FILES = [
-    './resources/PlugIns',
-    './resources/mecab',
-]
+def get_files(file_spec):
+    path = os.path.normpath(file_spec)
+    return glob.glob(path) #filter(lambda x: not x.endswith('CVS'), glob.glob(path))
+
+if IS_WINDOWS:
+    DATA_FILES = [
+        ('resources/PlugIns', get_files('resources/PlugIns/*')),
+        ('resources/mecab', get_files('resources/mecab/*')),
+    ]
+else:
+    DATA_FILES = [
+        './resources/PlugIns',
+        './resources/mecab',
+    ]
 
 PY2APP_OPTIONS = {
     'semi_standalone': False,
